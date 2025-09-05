@@ -1,0 +1,24 @@
+name = "probability"
+uuid = "223d6d3b-93f7-4712-ab68-51d046cbafb6"
+authors = ["Phaonex <phaonex@icloud.com>"]
+version = "0.1.0"
+
+[deps]
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Gen = "ea4f424c-a589-11e8-07c0-fd5c91b9da4a"
+Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
+RxInfer = "86711068-29c9-4ff7-b620-ae75d7495b3d"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+
+[compat]
+Combinatorics = "1.0.3"
+DataFrames = "1.7.0"
+Distributions = "0.25.120"
+Gen = "0.4.8"
+Latexify = "0.16.9"
+RxInfer = "4.5.0"
+Symbolics = "6.48.1"
+Turing = "0.39.10"
