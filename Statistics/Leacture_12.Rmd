@@ -1,0 +1,417 @@
+---
+title: "Design of Experiments—Thinking Ahead"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+That’s the challenge of experimental design, to make sure that we gather
+the data in such a way that we are able to draw the meaning from the
+data, that we are able to use the techniques of hypothesis testing and
+confidence intervals, to make the mathematical kind of deductions that
+make logical sense and that allow us to actually infer from the data the
+ideas of interest.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r}
+def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+Ronald Fisher pioneered experimental design in the early part of the 20th
+century. A famous case involving Fisher is told of a tea party where a lady
+claimed to be able to taste a cup of tea and tell whether the milk had been
+poured in rst, then the tea added or whether the tea had been poured in rst,
+then the milk added.
+
+**The context of the experiment and our beliefs and understanding of possible
+causes or lack of causes influence how we interpret experimental results. **
+
+If we can think of no physical or chemical reason for a difference, then we
+might be very skeptical of the result. For example, we might think that the
+lady saw how Fisher filled each cup, or that someone else told her, or that
+the “witness” wanted to make a good story. But thinking further, one may
+be able to imagine a physical reason that makes the difference a reality.
+For example, perhaps adding milk to hot tea scalds the milk in a way that
+could be tasted. If we can think of no possible physical difference that is
+potentially detectable by the woman, then we might remain quite skeptical
+of her abilities even after the experiment.
+
+**There are two types of ways we can go wrong in inferring a conclusion from
+an experiment:**
+
+• A type I error is where we reject the null hypothesis when, in fact,
+it is true.
+
+• A type II error is where we do not reject the null hypothesis when, in
+fact, it is false.
+
+Fisher began as a statistician at an agricultural research center. When he
+arrived, he found there was lots of information about crop yields, rainfall,
+fertilizer, and so forth, but the way the information had been collected made
+it difficult to draw useful conclusions from the data. Many of the variables
+involved were confounded with each other, meaning several different aspects
+of the growing conditions were changing at once, so it was difficult to tell
+which feature was causing what result. The kind of fertilizer, the kind of soil,
+and the amount of water were some of the variables. To confidently assign an
+effect to a kind of fertilizer, for example, we need to be able to disentangle
+its possible effects from the effects of the other variables.
+
+### placebo effect.
+
+In medical experiments, real effects often
+come from no physical cause, and those
+effects must be taken into account when
+testing new medications; that is, we need to consider the placebo effect. The
+fact of a placebo effect makes testing of drugs more difficult. If we give
+some people a new drug for, say, curing the common cold, and they get over
+their colds more quickly than people who did not take a drug, was it the drug
+or the placebo effect that shortened the cold?
+
+### Double-blind experiments
+
+Double-blind experiments avoid the placebo effect. The patient, the people
+who directly contact the patient or administer the drug, and the people who
+make judgments on the progress of the patient are all blind as to whether a real
+drug or a placebo is being used for that patient. Any possible psychological
+bias, intentional or not, is removed. Double-blind experiments are the gold
+standard, although the other qualities of design are still important, such as
+random selection from the population of who will be given the drug.
+
+### Hawthorne effect
+
+The Hawthorne effect is another famous example of difficulty in experimental
+design. Studies were done of the Hawthorne Plant of the Western Electric
+Company in Cicero, Illinois, between 1927 and 1932 to determine the
+effect of lighting, humidity, and other factors on worker productivity. It
+was discovered that the mere fact of doing the experiments, independent of
+which environmental factors were being changed, had a significant positive
+effect on the workers’ ability to perform their tasks. Perhaps workers liked
+the extra attention.
+
+### Lurking variables
+
+Lurking variables are another challenge to good experimental designs.
+Lurking variables are variables that aren’t being studied or controlled for but
+that have an effect on experimental results. For example, suppose that data
+show that married people in the workforce typically have a higher income
+than unmarried people in the workforce. We might deduce that being married
+is a cause of higher income. But thinking further, we realize that married
+people are, on average, older; hence, they have been in the workforce longer.
+In this case, age is a lurking variable. Placebo effect and Hawthorne effect
+are also examples of lurking variables.
+
+### Experimental design
+
+**The hallmarks of experimental design are as follows:**
+
+• Control: Try to control all of the variables other than the one of interest
+or have a fixed number of variables operate independently of each other
+so that the results can be disentangled.
+
+• Randomization: Do not introduce your own bias during
+sample selection.
+
+• Replication: Ensure that the experiment is replicable.
+
+*This lecture concludes the rest part of this course. In the second part, we will
+look at application areas of statistics*
+
+# Concept and Applications
+
+## HYPOTHESIS TESTING: 2 SAMPLES, PAIRED TEST
+
+Suppose that we want to test whether 2 samples are
+from the same distribution. We can look at their
+descriptive statistics, such as histograms or box plots,
+but that won’t confirm a statistical difference. We need a
+more formal method to determine a true difference. The
+goal of this lecture is to demonstrate how to determine
+if 2 samples are similar, meaning that they come from
+the same underlying distribution, or different, meaning
+that they come from different underlying distributions.
+
+### 2-SAMPLE HYPOTHESIS TESTING
+
+The chicken feed data has the weight and 6 different types of feed given
+to newly hatched chickens. We might ask the following question: Does
+the feed for chickens affect their growth? If so, which feed helps our
+chickens grow the largest? Which one is least effective?
+
+If the feed and weight are independent, meaning that neither one affects
+the other, then the distributions of the 2 samples should be the same. In
+other words, no matter what feed the chickens eat, their weights should
+be roughly the same.
+
+To do this in R, load the datasets library. Bring up the “chickwts” dataset
+using the “dataset( chickwts )” command. Let’s look at the summary
+statistics, so “summary( chickwts ).”
+
+```{r}
+summary(chickwts)
+```
+The weights are measured in grams after 6 weeks. The minimum
+weight is 108 grams and maximum is 423, with a mean of 261.3.
+
+We also see the 6 different feed types, along with the corresponding
+number of chickens in that feed group. The casein feed had 12 chickens,
+horsebean feed had 10 chickens, linseed had 12, and so on.
+
+```{r}
+meat <- chickwts[chickwts$feed == "meatmeal", 1]
+horse <- chickwts[chickwts$feed == "horsebean", 1]
+```
+
+We do a similar type of command for horsebean. Notice that we just
+named the new dataset “meat” and “horse.” In fact, if we type those out,
+we can look at the data values.
+Notice that our dataset is uneven. Meat has 11 entries while horse has 10.
+
+```{r}
+meat
+horse
+```
+
+Showing box plots for both samples is a great way for us to compare
+them.
+
+```{r}
+boxplot(meat, horse, main = "Meatmeal and Horsebean")
+```
+
+ Remember, our goal for this
+lecture is to determine if 2 samples are similar ( meaning that they
+come from the same underlying distribution ) or different ( meaning
+that they come from different underlying distributions ). Your box plot
+is helping shine light on that goal. We see that the bulk of the chickens
+in meatmeal, from the first quartile onward, weigh more than all the
+chickens that had the horsebean feed supplement.
+
+
+order meatmeal from smallest weight to greatest weight and likewise
+order horsebean from smallest weight to greatest weight.
+
+```{r}
+qqplot(meat, horse, xlim=c(100, 420), xlab = "Meatmeal", ylab = "Horsebean", ylim = c(100, 420), pch = 20, cex=2)
+abline(a=0, b=1, lwd= 3, col = "red")
+```
+
+Our graphical data analysis is leading us to believe that there might be
+a difference in chicken weight due to feed. But to draw that conclusion
+statistically, we can’t just look at the descriptive statistics. We have to
+do a formal statistical test—in this case, a hypothesis test.
+
+H0 is that the 2 samples are from the same distribution ( and have the
+same mean ).
+
+```{r}
+H_0: mu_meat ~ mu_horse
+```
+
+Testing μmeat = μhorse is equivalent to testing
+```{r}
+mu_meat ~ mu_horse ~ H_0: mu_meat - mu_horse ~ 0
+```
+
+The test statistic to use is the difference between sample mean and rescale that by the variance.
+
+```{r}
+X_mean ~ X_horse
+```
+
+A 2-sample t-test lets us determine whether the means of 2 independent
+data samples are different from one another. In a 2-sample test, the null
+hypothesis is that the means of both groups are the same. Unlike the
+1-sample test ( where we test against a known population parameter ),
+the 2-sample test only involves sample means.
+
+You might sometimes see this method referred to as Welch’s t-test
+because it deals with comparing 2 samples, as opposed to Student’s
+t-test, which is for 1 sample.
+
+Here we’ve taken the mean and standard deviation of meatmeal and
+horsebean and calculated our test statistic, T. The value that we get is
+5.059.
+
+```{r}
+mean_meat <- mean(meat)
+mean_horse <- mean(horse)
+
+sd_meat <-  sd(meat) / sqrt(length(meat))
+sd_horse <-  sd(horse) / sqrt(length(horse))
+
+```
+
+```{r}
+T_stat <- (mean_meat - mean_horse) / sqrt(sd_meat^2 + sd_horse^2)
+T_stat
+```
+
+
+R does the heavy lifting for you with the “t.test” function. The command
+is “t.test( meat, horse ),” and it returns the Welch’s 2-sample t-test.
+
+We can confirm our test statistic value of 5.059, and we have a very low
+𝑝-value, which would lead us to reject the null hypothesis that the 2
+means are equal.
+
+```{r}
+t.test(meat, horse)
+```
+### PAIRED T-TESTS
+
+The 2-sample t-test procedure only applies when the 2 samples are independent and the underlying distributions are normal, as in our chicken weight example.
+
+But what if we want to do a hypothesis test on data that’s related—
+dependent data? An example would be a person’s cholesterol level
+before and after being on a low-fat diet. In this case, we use a paired
+t-test, which helps us compare 2 samples where observations from one
+sample can be paired with observations from the other sample.
+
+The paired-sample t-test works the same as a 1-sample t-test, but each
+observation in one sample is correlated to an observation in the second
+sample.
+
+For example, the “IceSkating” dataset in the R package called
+“PairedData” gives the speed measurement ( in meters per second ) for
+7 ice-skating dancers when 1 leg was either extended ( extension ) or
+flexed ( flexion ).
+
+```{r}
+data("IceSkating")
+attach(IceSkating)
+IceSkating
+```
+Our summary statistics give us an idea of the spread of the data.
+Extension ranges from 1.68 to 2.13 meters per second with a mean of
+1.963, and flexion ranges from 1.55 to 2.1 meters per second with a
+mean of 1.854.
+
+```{r}
+summary(IceSkating)
+```
+
+s there a difference in speed when the leg is extended versus flexed?
+
+```{r}
+qqplot(IceSkating$Extension, IceSkating$Flexion, xlim=c(1.0, 2.4), xlab = "Extension", ylab = "Flexion", ylim = c(1.0, 2.4), pch = 20, cex=2)
+abline(a=0, b=1, lwd= 3, col = "red")
+
+```
+We can also look at the before and after measurements by subjects. In
+the following plot, we’ve sorted the subjects from least to greatest ( in
+terms of average speed ) along the 𝑦-axis, and their before and after
+measurements are plotted with extension in red and flexion in blue.
+In R, we use the following command.
+
+```{r}
+with(IceSkating, plot(paired(Extension, Flexion), type= "McNeil"))
+```
+One main assumption for the paired t-test is that the differences of
+the pairs should follow a normal distribution, so we should check that
+assumption. Actually, our original data no longer has to satisfy the
+normality constraint. We’re not directly using those data values in the
+t-test—only their differences.
+
+```{r}
+hist(Extension - Flexion)
+```
+Because we only have 7 points, this histogram doesn’t really help us see
+if the data’s normal.
+
+A quantile-quantile ( Q-Q ) plot of the difference looks much better.
+Notice how our points fall nicely along the line. And we can confirm
+with the Shapiro-Wilk test, which gives us a 𝑝-value of 0.6137.
+
+```{r}
+with(IceSkating, qqnorm(Extension - Flexion))
+with(IceSkating, qqline(Extension - Flexion))
+
+```
+```{r}
+shapiro.test(Extension - Flexion)
+```
+Let’s walk through some of the details of the paired t-test. For each
+matched pair, we create a new variable, d, which represents the
+difference between the 2 samples: d = Extension − Flexion. In R, we
+assign d to the difference in speed between extension and flexion.
+
+```{r}
+d = Extension - Flexion
+d
+```
+
+
+If there’s no difference in speed when the leg is extended versus flexed,
+then we would expect the means of the 2 groups to be equal:
+
+```{r}
+mean_ex ~ mu_fl
+```
+
+We can quickly verify that mean( Extension ) − mean( Flexion ) = mean( d ).
+
+```{r}
+mean(Extension) - mean(Flexion)
+
+mean(d)
+```
+
+And we can compare it to the tα/2, n−1 critical value. Here’s the code to get
+those values in R, both for the 95% and the 99% confidence level:
+
+```{r}
+abs(qt(0.05/2, 6)) # 95% conf 2 sides
+
+abs(qt(0.01/2, 6)) # 99% conf 2 sides
+```
+
+Notice that at the 95% confidence level, we reject the null hypothesis
+because T > 2.45. We would conclude that there is a difference in speed
+when the leg is extended versus flexed.
+
+But at the 99% confidence level, we fail to reject the null because T < 
+3.71. This is where the 𝑝-value’s importance is critical, because it
+tells us exactly where the cutoff is for this particular sample.
+
+In R, the function “pt” gives the value of the t-distribution at our
+calculated t-statistic with 𝑛 − 1 ( the number of groups − 1 ) degrees of
+freedom. We multiple by 2 because it’s a 2-sided test.
+
+```{r}
+2 * (1 - pt(2.9346765, 6))
+```
+
+We can compare this to the output that R gives us. Notice that our
+𝑝-value of 0.026 matches the result that we get from R
+
+```{r}
+t.test(Extension, Flexion, paired = TRUE)
+```
+Some people inadvertently do a regular t-test on paired data, but they
+shouldn’t do that. If fact, let’s see what would happen if we just did the
+normal Student’s t-test on paired data. Do you think we would get the
+same result?
+
+```{r}
+t.test(Extension,Flexion)
+```
+
+**If the differences between pairs are non-normal, don’t use the t-test for
+that. Your results won’t be valid.**
+
+In this case, it would be better to use
+a non-parametric test, such as the Wilcoxon signed-rank test, which
+doesn’t depend on an underlying assumption of normality.

@@ -1,0 +1,389 @@
+---
+title: "Election Problems and Engine Failure"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+[I]n this lecture, we’re going to start out with a case study, where we
+look at the preferences of the people and ask the question of “Who is
+the people’s choice?” This example actually is a real election—it was
+real data from an important election—so it will be interesting for you
+to see it and make your own decision.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r}
+def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+
+This lecture begins as a continuation of the previous lecture by looking
+at some famous real elections in which we might wonder whether the
+will of the people prevailed. The challenge of choosing an election
+winner can be thought of as taking voters’ rank orderings of the candidates
+and returning a societal rank ordering.
+
+Here is a chart that summarizes the voting preferences of the population,
+giving for each candidate the percentage of the population that ranked the
+candidate rst, second, and so on.
+
+```{r}
+tibble(
+  candidate = c("A", "B", "C", "D", "Total_%"),
+  "%_of_1st" = c(40, 13, 18, 29, 100),
+  "%_of_2st" = c(14, 46, 18, 22, 100),
+  "%_of_1+2" = c(54, 59, 36, 51, 200),
+  "%_of_3st" = c(16, 33, 3, 48, 100),
+  "%_of_1+2+3" = c(70, 92, 39, 99, 300),
+  )
+```
+What follows is a summary of how well each candidate would have done
+under each voting scheme.
+
+• In plurality voting, A would win.
+• In the vote-for-two scheme, B would win.
+• Using a run-off, D would win.
+• Using the Borda Count method, D would win.
+
+What candidate do you think best represents the will of the people? Many
+people feel that Candidate D is the best choice. Before telling you who
+actually won this election, let me tell you that this election was a presidential
+election; thus, there is one more column to be added to the table, namely, the
+Electoral College votes. In the Electoral College, Candidate A won handily
+with 180 electoral votes. Interestingly Candidate C, who was not a contender
+in any of the other schemes presented, actually received the second highest
+number of electoral votes.
+
+Perhaps now is the time to tell you what election this was: It was the
+presidential election of 1860. Candidate A is Abraham Lincoln, B is Bell, C
+is Breckinridge, and D is Douglas. The percentages of people who rated the
+candidates in second and third places are estimates obtained from historians
+72
+of the Civil War. It is intriguing to think about the consequences of the
+statistical issue of how to summarize the data of the voters’ opinions.
+
+```{r}
+tibble(
+  candidate = c("A", "B", "C", "D", "Winner"),
+  plurality = c(.40, .13, .18, .29, "A"),
+  Vote_for_two = c(.27, .30, .18, .25, "B"),
+  run_off = c(.46, 0., 0., .54, "D"),
+  borda_count = c(164, 165, 92, 179, "D"),
+  electoral_college = c(180, 39, 72, 12, "A"),
+  )
+```
+We have seen lots of bad news about election problems. Now, if possible, it
+gets worse. Next, we will discuss the Condorcet Paradox. Let’s look at an
+example of an election among three candidates, A, B, and C. The following
+chart summarizes the views of the 30 voters about these candidates.
+
+```{r}
+tibble(rank = c("1_st", "2_st", "3_st"), voters_f_10 = c("A", "B", "C"),
+       voters_s_10 = c("B", "C", "A"), voters_t_10 = c("C", "A", "B"))
+```
+
+For every candidate, two-thirds of the people have a speci c alternative
+candidate whom they prefer. We can produce even worse cases—with 10
+candidates, for example, when no matter who is declared the winner, there is
+a specific alternative candidate who is preferred by 90% of the voters.
+
+
+Many people feel that if there is a speci c candidate who would beat every
+other candidate in a head-to-head contest, then that candidate, the Condorcet
+winner, should be declared the victor. Marie Jean Antoine Nicolas Caritat,
+73
+marquis de Condorcet, wanted to point out a weakness of the Borda Count
+method. He did so by producing the following famous voters’ profile:
+
+```{r}
+tibble(rank = c("1_st", "2_st", "3_st"), "30" = c("A", "B", "C"),
+       "10" = c("B", "C", "A"), "10_s" = c("C", "A", "B"), "1" = c("A", "C", "B"),
+       "29" = c("B", "A", "C"), "1_s" = c("C", "B", "A")
+       )
+```
+B wins with the Borda Count. But A is the Condorcet winner. Thus, the
+Borda Count method does not always select the Condorcet winner. However,
+in a sort of voting theory double-reverse, recently, Donald Saari has pointed
+out an interesting further analysis of this old example. If we rst erased
+collections of voters whose votes canceled one another, then B should win.
+Perhaps the Borda Count method chose the right winner.
+
+```{r}
+tibble("20" = c("A", "B", "C"), "0" = c("B", "C", "A"),
+       "0_s" = c("C", "A", "B"), "0_t" = c("A", "C", "B"), "28" = c("B", "A", "C"),
+       "0_fo" = c("C", "B", "A"))
+```
+This example shows again the subtleties of summarizing data meaningfully.
+
+All the examples in the last two lectures suggest that summaries of complex
+situations require contextual arguments to decide among them. Statistical
+and logical analysis can help a great deal in choosing which arguments to
+find most persuasive and which systems to use in which settings. Voting
+theory is an intriguing topic for further study.
+
+# Concept and Applications
+
+## MULTIPLE LINEAR REGRESSION
+
+When we first started examining the relationship
+between 2 variables, we used t-tests, which
+allowed us to determine if there was a
+statistically significant relationship between 2 variables.
+We then moved to simple linear regression, which allowed
+us to fit a line to a predictor versus response. While these
+are useful in the case where we only have 2 variables, it’s
+more often the case to work with data that has multiple
+predictors. This lecture is about multiple linear regression.
+
+### MULTIPLE LINEAR REGRESSION
+
+Multiple regression is a statistical tool that allows us to examine how
+multiple predictor variables can be used to model a response variable.
+
+We’ve generalized the simple linear regression methodology to now
+describe the relationship between a response variable 𝑦 and a set of
+predictorsX1, X2, …, X𝑛 in terms of a linear function.
+
+The variables X1, X2, …, X𝑝 are the 𝑝 explanatory variables ( because they
+explain what’s happening ) in the response variable Y.
+
+Y = β0 + β1X1 + β2X2 + … + βpXp + 𝜖, where β0, β1, …, βp are the coefficients
+( parameters ), X1, X2,
+
+
+As in the case of simple linear regression, we want to find the equation
+of the line that best fits the data. In this case, it means finding ( 0, 1, …,
+p ) such that the fitted values, ŷi, are as close as possible to the observed
+values, 𝑦i.
+The following data was collected on a population of women 21 and older
+of Pima Indian heritage who were living near Phoenix, Arizona. The
+women were tested for diabetes according to World Health Organization
+criteria. This is a very rich dataset with the following columns:
+
+- npreg: number of pregnancies;
+- glu: plasma glucose concentration in an oral glucose tolerance test;
+- bp: diastolic blood pressure ( mm Hg );
+- skin: triceps skinfold thickness ( mm );
+- bmi: body mass index ( weight in kg/( height in m )2 );
+- ped: diabetes pedigree function ( information on relatives with diabetes );
+- age: age in years; and
+- type: “Yes” or “No” for diabetic according to WHO criteria.
+
+```{r}
+head(Pima.tr)
+```
+```{r}
+pima = Pima.tr
+summary(pima)
+```
+
+All of the variables are quantitative except for type, which is categorical
+( “Yes” for diseased or “No” for non-diseased ).
+
+```{r}
+hist(pima$bp)
+```
+
+```{r}
+plot(density(pima$bp), main= "Blood Pressure")
+```
+
+In the following pairs plot of 4 of the data values, there doesn’t seem to be
+a strong relationship in the data values. In fact, skin is a possible outlier.
+
+```{r}
+pairs(pima[1:4])
+```
+
+```{r}
+pairs(pima[5:8])
+```
+In the following pairs plot of the other 4 quantitative values, there is a
+slight relationship between bmi and ped.
+
+```{r}
+round(cor(pima[1:7]), 2)
+```
+We can do a correlation analysis of our data to tell us the relationship
+between our variables. Notice that most of the correlations are at or
+below 0.34. The highest is between bmi and skin, at 0.66. Then, age
+and number of pregnancies is correlated at 0.6. That tells us that these
+variables would go nicely into a linear regression fit. We’re not going to
+see a strong correlation among them.
+
+Let’s fit a multiple linear regression model to bmi from the rest of the explanatory variables.
+
+```{r}
+lm1 <-  lm(bmi ~ npreg + glu + bp + skin + ped + age + type, data = pima)
+summary(lm1)
+```
+
+We could go through and think hard about which variables to include,
+or we could automate the process. Stepwise regression lets us drop
+insignificant variables one by one. This is particularly useful if you have
+many potential explanatory variables.
+
+Not all of our 𝑥i variables are significant predictors. 
+We can drop the most insignificant paremeter out one at a time using the “drop1”
+command in R.
+
+```{r}
+lm2 <- lm(bmi ~ npreg + glu + bp + skin + ped + age + type, data = pima)
+drop1(lm2, test="F") 
+```
+We can also model glucose as a function of our other predictor variables.
+
+```{r}
+lm3 <-  lm(glu ~ bmi + npreg + bp + skin + ped + age + type, data = pima)
+summary(lm3)
+```
+Plot the actual values against the predicted values. Informally, the
+model does not appear to be doing a good job.
+
+```{r}
+plot(lm3$fitted.values, pima$glu)
+predict(lm3)
+```
+We can check for linearity by examining the residual plot.
+
+```{r}
+plot(lm3$fitted.values, lm3$residuals)
+```
+Check for normality and constant variance. Do the conditions appear to be approximately satisfied for this model?
+
+```{r}
+hist(lm3$residuals)
+qqnorm(lm3$residuals)
+qqline(lm3$residuals)
+```
+### DATA WITH HIGHER CORRELATION
+
+The Pima dataset is nice because it has several quantitative predictors
+and the predictors aren’t highly correlated. But what happens when we
+have predictors that are correlated?
+
+Let’s return to the Motor Trend cars data and fit a multiple regression model
+by including more explanatory variables in a linear regression model.
+
+Let’s load our “mtcars” dataset.
+
+```{r}
+mpg_model <-  lm(mpg ~ wt + hp, data=mtcars)
+summary(mpg_model)
+```
+Let’s add the “horsepower” variable to our original model on the mpg
+dataset. Now our proposed regression model is 𝑦 = β0 + β1weight +
+β2horsepower + 𝜖, where β0 is our 𝑦-intercept, β1 is our regression
+coefficient for weight, and β2 is our regression coefficient for
+horsepower.
+
+The coefficient for each of our explanatory variables is the predicted
+change in 𝑦 for 1 unit change in 𝑥, given that the other explanatory
+variables are held fixed.
+
+For example, as weight increases by 1 unit, the miles per gallon will
+decrease by 3.877. Intuitively, this makes sense: The heavier a car gets,
+the lower miles per gallon it would tend to get.
+
+The 𝑝-value for each coefficient tells us whether it’s a significant
+predictor of 𝑦 given the other explanatory variables in the model.
+Notice that the 𝑝-values for both weight and horsepower are significant.
+
+If explanatory variables are associated with each other, coefficients and
+𝑝-values will change depending on what else is included in the model.
+
+```{r}
+cor(mtcars$wt, mtcars$hp)
+```
+
+We see that “hp” and “wt” are correlated with a correlation coefficient
+of 0.658. It’s possible that these predictors are collinear, meaning that
+they’re either highly correlated or they contribute the same information
+to the model.
+
+Because we have several predictor variables in our “mtcars” data, let’s
+just throw them all in the model. Perhaps this will improve our model
+even more.
+
+```{r}
+mpg_model = lm(mpg ~., data = mtcars)
+summary(mpg_model)
+```
+None of our variables are significant. The all have 𝑝-values greater than
+0.05. In fact, a model using all the variables doesn’t perform as well as
+our weight-and-horsepower–based model. Our adjusted R2 actually
+decreased—from 0.8148 to 0.8066.
+
+Adding more explanatory variables will only make R2 increase. The
+more predictors we have in the model, the more they consume our
+regression sum of squares. Because R2 is the ratio of the regression
+sum of squares to the total sum of squares, it will always increase with
+additional predictor variables.
+
+One problem in our data is that our variables are correlated. We can see
+this in the pairs plots.
+
+```{r}
+pairs(mtcars[, c(1, 3: 4)])
+```
+
+```{r}
+pairs(mtcars[, c( 5: 7)])
+```
+```{r}
+pairs(mtcars[,c(1,3: 7)])
+```
+We have highly correlated variables. This leads to model misspecification.
+
+```{r}
+round(cor(mtcars[, c(1:3, 7)]), 2)
+```
+
+In fact, it’s possible to overfit a model by including too many explanatory
+variables. **We have to use the principle of parsimony—the simplest,
+most efficient model is the best—because the fewer the coefficients
+have to estimate, the better they will be estimated.**
+
+We can find the best model by pruning. We “step” through the predictor
+variables and remove the ones that are not significant.
+
+### CHOOSING THE BEST MODEL
+
+How do we choose a best model? There are several methods we could
+use based on which model features are most important to us.
+
+*Choose the model with the highest adjusted R2.* This assumes that we
+choose to evaluate the success of our model in terms of the percentage of
+the variability in the response explained by the explanatory variables.
+
+*The 𝑝-value for an explanatory variable can be taken as a rough measure
+for how helpful that explanatory variable is to the model.* Insignificant
+variables may be pruned from the model as long as adjusted R2 doesn’t
+decrease. You can also look at relationships between explanatory
+variables; if 2 are strongly associated, perhaps both are not necessary.
+
+Let’s do a stepwise regression on our linear model fit of miles per gallon
+with all of our data. This will automatically spit out the best model.
+
+```{r}
+mpg_model2 <-  step(lm(mpg ~., data = mtcars))
+```
+The output from our stepwise regression model is as follows. This is the
+best model.
+
+```{r}
+summary(mpg_model2)
+```

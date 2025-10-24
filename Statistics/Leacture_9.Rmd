@@ -1,0 +1,286 @@
+---
+title: "Samples—The Few, The Chosen"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Foundational Concepts
+
+In this lecture, we’re going to come to grips with the question of what
+only part of the data really means. So, this lecture is about the
+concept of a sample.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r}
+def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+
+With this lecture, we begin the investigation of how to infer features
+of the whole population from information about just some of the members
+of the population. A common scenario in which this plays out occurs when
+a poll is taken to estimate what proportion of voters favor which
+candidate.
+
+Recall that the structure of our course is to view statistical analysis
+as having two basic parts: (1) how to describe, summarize, and organize
+a collection of data if we know all the data and (2) how to infer
+information about the whole population if we know only part of the data.
+The term population refers to the whole collection of people or things
+being considered. A sample is a subset of the total population, whether
+people, auto parts, or anything else we are investigating. We want to
+infer information about the whole population from information about the
+sample.
+
+Voluntary response polls can lead to results that present a totally
+inaccurate view of the whole population. The simplest way to get a
+sample that is likely to be representative of the whole population is to
+just randomly pick a subset of the population. This is called a *simple
+random sample* (SRS).
+
+```{r}
+coins <- \() sample(c("T", "H"), size=2, replace = TRUE)
+
+experiment = purrr::map(1:1000, \(s) coins());
+```
+
+Ask everyone to raise their hand if they either threw a head or they
+cheat.
+
+```{r}
+false_student <-  purrr::discard(experiment, \(s) s[1] == s[2])
+true_student <-  purrr::keep(experiment, \(s) s[1] == s[2])
+head_student <-  purrr::keep(experiment, \(s) s[1] == "H" &  s[2] == "H")
+
+```
+
+```{r}
+counted <- list(false = length(false_student), true = length(true_student), head = length(head_student))
+```
+
+• Suppose we do this experiment with 1000 students, and 800 raise their
+hands.
+
+```{r}
+cmStats$P(counted$head, counted$true)
+```
+
+We can estimate that about 60% of the students cheat because if 500
+threw heads, then 300 of the 500 who threw tails cheated—about 60%
+(300/500).
+
+```{r}
+cmStats$P(300, 500)
+```
+
+In taking samples, our goal is to obtain samples from which we can
+accurately infer information about the whole population. That is, we
+want our samples to be representative of the whole population. Pitfalls
+to avoid in taking samples include avoiding biased samples and being
+wary of results obtained from voluntary response samples. We can obtain
+statistical information concerning sensitive information by using clever
+techniques in which no 43 individual needs to divulge sensitive secrets.
+The basic purpose of getting data from a sample is to infer information
+about the whole population. How that inference is made is the subject of
+the next lectures. \# Concept and Applications
+
+## POINT ESTIMATES AND STANDARD ERROR
+
+Descriptive statistics focus on summarizing characteristics about our
+data, such as calculating the sample mean or plotting histograms, and
+describe the dataset that’s being analyzed but don’t let us to draw any
+conclusions or make any interferences about the data. On the other hand,
+statistical inference uses our dataset to extract information about
+populations or answer real-world questions with certainty. It builds on
+the methods of descriptive statistics, but we can draw conclusions about
+the population based on data from a sample.
+
+### POINT ESTIMATES
+
+Any time we have a random sample, we can calculate the sample mean,
+variance, and standard deviation. These values are called point
+estimates.
+
+```{r}
+head(Orange)
+```
+
+The dataset “Orange” has 35 rows and 3 columns of records of the growth
+of orange trees. Find a point estimate for the average orange tree
+growth and average tree circumference using the orange tree data.
+
+```{r}
+summary(Orange)
+```
+
+A point estimate for the average orange tree age would be 922.14 days,
+and a point estimate for orange circumference would be 115.85
+millimeters.
+
+```{r}
+as_tibble_row(list(age =  mean(Orange$age), circ = mean(Orange$circumference)))
+```
+
+The median is also a perfectly valid point estimate.
+
+```{r}
+as_tibble_row(list(age =  median(Orange$age), circ = median(Orange$circumference)))
+
+```
+
+Notice how close the sample mean circumference is to the sample median
+of circumference: 115.85 compared to 115. And look how far off tree age
+estimates are from each other: 922.1 compared to 1004.
+
+Which estimate is better? How do we decide between the 2?
+
+### STATISTICAL INFERENCE
+
+Statistical inference is the process of making an estimate, prediction,
+or decision about a population based on a sample.
+
+The rationale is that large populations make investigating every member
+impractical and expensive. It’s easier and cheaper to take a sample and
+make estimates about the population from the sample. But those estimates
+aren’t always going to be correct.
+
+Statistical inference helps us do 2 main things: Draw conclusions about
+a population or process from sample data and provide a statement of how
+much confidence we can place in our conclusions.
+
+### ESTIMATION
+
+The objective of estimation is to approximate the value of a population
+parameter on the basis of a sample statistic. We can estimate both
+points and intervals.
+
+A point estimate of a parameter θ is a single number that can be
+regarded as a sensible value for θ. We find a point estimate by
+selecting a suitable statistic and computing its value from given sample
+data. The selected statistic is called the point estimator.
+
+Point estimate is a value; point estimator is a statistic. Usually, we
+use to denote the point estimator of a parameter θ.
+
+The “women” dataset in R contains the average heights and weights for
+American women aged 30 to 39. This is a sample of 15 women with those 2
+variables: height in inches and weight in pounds.
+
+```{r}
+summary(women)
+```
+
+```{r}
+head(women)
+```
+
+```{r}
+plot(women)
+```
+
+```{r}
+list(mean = mean(women$weight), median = median(women$weight))
+```
+
+We can generate point estimates for the population parameters based on
+our sample statistics. What other estimators could we use to estimate
+the population mean ( μ )?
+
+Average of the extremes: . In fact, we’re taking the range and halving
+it, so this gives us a measure of the center of the dataset.
+
+Because we don’t know how close we are to the true population parameter,
+we have to be strategic in selecting our point estimator. In other
+words, we want our point estimate to follow certain rules so that we
+know our sample estimate will be close to the population estimate.
+
+### CHOOSING AN OPTIMAL ESTIMATOR
+
+How do we choose an optimal estimator?
+
+A point estimator is a random variable, and its value varies from sample
+to sample. That variability is called the error of estimation.
+
+```{r}
+errro_of_estimation ~ phi:hat - phi
+```
+
+```{r}
+# solving for phi_hat:
+phi_hat ~ phi + error_of_estimation
+```
+
+Which is the best one? We want to choose an estimator that is unbiased,
+one that is closest to the true value of the parameter θ on average, and
+that has minimum variance, or the one with the smallest estimation of
+error—the smallest variability, the least spread.
+
+A point estimator is an unbiased estimator of the parameter θ if E( If
+is not unbiased, the difference E( ) − θ is called the bias of.
+
+Other estimates exist, such as the range, or the average of the largest
+and smallest values. But these estimates are not unbiased and should not
+be used to estimate the mean.
+
+```{r}
+cmStats$mu_sym
+```
+
+Sample variance $s^2$ the unbiased estimator of the $𝑛 − 1$, population
+variance $σ2$.
+```{r}
+sum(cmStats$X - cmStats$mu_sym)^2/ (cmStats$n - 1)
+```
+```{r}
+cmStats$σ_2_sym
+```
+Suppose that X is a binomial with parameters 𝑛 and 𝑝, with 𝑝 unknown.
+We can show that the estimator = 𝑥 / 𝑛 is an unbiased estimator.
+
+```{r}
+E(X/n) ~ 1/n * E(x) ~1/n * np ~ p
+```
+For a normal distribution with mean μ and variance σ2, given a random
+sample of size 𝑛, X1, X2, … X𝑛, we can show that the sample mean
+is an unbiased estimator of μ.
+
+```{r}
+E(X_bar) ~ E(Sigma(X)/n) ~ 1/n * E(Sigma(X))
+```
+
+### CONSISTENCY
+
+An unbiased estimator is consistent if the variance of the estimator
+approaches 0 as our sample size ( 𝑛 ) approaches infinity. In other words,
+the difference between the estimator and the population parameter
+becomes smaller as the sample size increases.
+
+As another example, suppose instead that we estimate the mean by
+averaging the first and last values, X1 and X𝑛. This estimate is unbiased
+because
+
+```{r}
+E((X_1 + X_n)/2) ~E(X_1)/2 + E(X_n)/2 ~ mu/2 + mu/2 ~ mu
+```
+
+```{r}
+as_func(cmStats$μ_hat_sym)
+#(min(1:10) + max(1:10))/2
+sum(cmStats$x)
+``` ### still not finis!!!!!
+

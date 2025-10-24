@@ -1,0 +1,458 @@
+---
+title: "Science—Mendel’s Too-Good Peas"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Foundational Concepts
+
+In this lecture, we’re going to be talking about science and applications
+of statistics to science. Certainly, statistics and the statistical analysis of
+data are obviously central players in all aspects of science.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+library(plotly)
+library(RKaggle)
+```
+
+```{r}
+def_sym("X", "Y", "a" , "b")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+solar_system <-  RKaggle::get_dataset("cpitrat/solar-system-planets-motions");
+```
+
+Advances in empirical science depend on drawing deductions from
+data. In many cases, a scienti c theory is tested by comparing
+experimental results to predictions of the theory. Randomness can
+enter in two ways. First, measurement error (noise) in experimental results
+adds randomness to otherwise de nite predictions. Second, some theories,
+such as Mendel’s theory of trait inheritance over generations of pea plants,
+are inherently probabilistic. In fact, reported results with too little uctuation
+can be evidence of fraudulent data. On the other hand, a measurement much
+different from other measurements (an outlier) can indicate either that some
+gross error in measuring has occurred, in which case the measurement should
+be discounted, or that some fundamental assumption is incorrect. Study of
+the ozone layer in the atmosphere supplies a cautionary example.
+
+Statistics is involved in essentially all scienti c matters, from weather
+reports to quantum physics. During the last 400 years, we humans have
+fundamentally altered our conception of the universe and our position in it,
+in many cases as a result of some scienti c advance that ultimately is based
+on the analysis of data. In this lecture, we’ll look at several examples of
+scientific developments and the role of statistics in them.
+
+```{r}
+head(solar_system)
+```
+The rst example involves Johannes Kepler, the famous astronomer,
+working in about 1600 as assistant to the astronomer Tycho Brahe, who
+had amassed vast amounts of data about the locations of planets and stars.
+Kepler computed that the data t a model of the solar system in which the
+planets revolve around the Sun following elliptical orbits. In devising his
+laws of planetary motion, Kepler used the statistical technique of creating a
+mathematical model to summarize the data.
+
+```{r}
+lazy_dt <-  dtplyr::lazy_dt(solar_system)
+
+plot_data_efficient <- lazy_dt %>% 
+  select(body, x, y, z) %>%
+  mutate(body = factor(body)) %>%
+  filter(body != "Sun") %>%
+  as_tibble()
+head(plot_data_efficient)
+```
+```{r}
+# Plotting the 1D Orbits (X-Y Plane)
+orbit_plot_2D <- ggplot(plot_data_efficient, aes(x = x, y = x, group = body, color = body)) +
+  
+  geom_path(linewidth = 0.5) +
+  
+  geom_point(aes(x = 0, y = 0), color = "orange", size = 5) +
+    coord_fixed() +
+  
+  labs(
+    title = "1D Projection of Planetary Orbits",
+    x = "X Coordinate (AU or scaled units)",
+    y = "Y Coordinate (AU or scaled units)"
+  ) +
+  theme_minimal()
+
+orbit_plot_2D
+```
+
+Later, Isaac Newton formulated
+his universal law of gravitation, which implies that two masses will follow
+elliptical orbits about one another.
+
+```{r}
+orbit_plot_2d <-  ggplot(plot_data_efficient, aes(x = x, y = y, group = body, colour = body)) +
+  geom_path(linewidth = 0.5) +
+  geom_point(data = plot_data_efficient %>% group_by(body) %>% slice_tail(n = 1), size = 2) +
+  geom_point(aes(x = 0, y = 0), color = "orange", size = 5) +
+  geom_text(aes(x = 0, y = 0), label = "Sun", vjust = -1, color = "black") +
+  
+  coord_fixed() +
+  
+  labs(
+    title = "2D Projection of Planetary Orbits (X-Y Plane)",
+    x = "X Coordinate (AU or scaled units)",
+    y = "Y Coordinate (AU or scaled units)",
+    caption = "Data Source: Solar System Planets Motions Dataset"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+orbit_plot_2d
+```
+Science frequently progresses in this way. Observations are made that are
+well summarized by a mathematical equation or model, based on statistical
+curve-fitting techniques. Later, a more basic understanding of causes and
+effects can explain that physical model.
+
+```{r}
+
+
+# Use plot_ly and add_paths to trace the 3D orbits
+plot_ly(plot_data_efficient, 
+        x = ~x, 
+        y = ~x, 
+        z = ~x, 
+        color = ~body, 
+        type = 'scatter3d', 
+        mode = 'lines'
+) %>%
+  layout(title = "3D Interactive Planetary Orbits",
+         scene = list(aspectmode = "data")) # Keeps scales proportional
+```
+
+Another example in astronomy is the 3-degree radiation left over from the
+Big Bang. Researchers were trying to build a precise radio telescope and kept
+sensing background noise. After many attempts to ne-tune their instruments
+to avoid that “error,” the researchers discovered that the background noise
+was a real phenomenon: the 3-degree Kelvin radiation left over from the Big
+Bang at the creation of the universe.
+
+Randomness is at the heart of quantum physics. Modern theories of physics
+postulate the very unintuitive concept that a subatomic particle, such as an
+electron, is not in a precise location at a particular time. Instead, the location
+of an electron is a probability distribution. These theories put the statistical
+and probabilistic nature of existence in a fundamental position in our
+understanding of the world.
+
+Another example of statistics in science is Mendel’s famous experiments with
+peas. Mendel noted statistical patterns in data concerning hereditary traits of
+pea plants. Yellow is the dominant gene. If homozygous yellow pea plants
+(those with two yellow genes) and homozygous green pea plants (those with
+two green genes) are crossed, the rst-generation offspring all look yellow,
+being yellow heterozygous plants (those with
+one yellow gene and one green gene). The
+second-generation offspring, however, which
+are the result of crossing yellow heterozygous
+plants, are about one-quarter green, indicating
+homozygous green pea plants.
+
+```{r}
+observed_counts <- c(Round = 428, Wrinkled = 152)
+total_count <- sum(observed_counts)
+
+
+expected_proportions <- c(Round = 3/4, Wrinkled = 1/4)
+
+expected_counts <- total_count * expected_proportions
+expected_counts
+```
+
+Statisticians have looked at Mendel’s reported results and have discovered
+that it would be very unusual, given the amount of his data, that all of the
+results would be in the narrow bounds he reported. In short, Fisher believed
+that the data that Mendel got were too good. Ronald Fisher, to whom we
+were introduced in Lecture 12, found that Mendel’s results lie within 1
+standard deviation of the mean much more often than the expected 68% of
+the time.
+
+```{r}
+mendel_chi_sq_test <- chisq.test(
+  x = observed_counts, 
+  p = expected_proportions
+)
+
+mendel_chi_sq_test
+```
+Fisher also noted that Mendel used the method of cross-breeding
+yellow plants with themselves 10 times to identify whether they were
+homozygous or heterozygous. In an interesting twist, this method implies
+that we should have expected Mendel to misclassify a certain percentage of
+plants; however, Mendel’s reported data are closer to the data expected if
+all the plants were classi ed correctly. Mendel’s work illustrates all aspects
+of statistics, including design of experiments and interpretation of data, and
+may illustrate the possibility that the data were made to look somewhat better
+than they actually were.
+
+Using carefully executed statistical capture-recapture methods, scientists
+can estimate quantities as diverse as the population of tigers in a jungle, the
+volume of water in a lake, and the size of a natural gas deposit in the ground.
+Statistical analysis of experimental data is key to validating or invalidating a
+scienti c theory.
+
+# Concept and Applications
+
+## PRIOR INFORMATION AND BAYESIAN INFERENCE
+
+Thus far, our approach to statistical inference
+has been greedy for new data. Getting more
+new data, and increasing our sample size, are
+the keys to making our inferences even more reliable.
+The approach we have been following is called a
+frequentist approach. But what about also using prior
+data and prior information? This is the central idea of
+Bayesian inferential statistics, which gives us a way
+to update our prior beliefs based on observed data.
+
+### BAYESIAN STATISTICS
+Bayesian statistics is an entirely different approach for doing statistical
+inference. In other words, it’s not just another technique like regression,
+hypothesis testing, or ANOVA.
+
+- The methods are based on the idea that before we ever observe data, we
+have some prior belief about it, perhaps based on experience or other
+experiments. As we observe new data, we use the data to update our belief.
+
+- A lot of what you’ve learned in this course stays the same with Bayesian
+statistics. Histograms, box plots, and numerical summaries stay
+largely the same. Discrete and continuous distributions, along with
+special cases, such as the binomial, exponential, uniform, and normal
+distributions, stay the same, but we often make more use of a variety of
+distributions. Uncovering a relationship between 2 variables in terms
+of correlation and covariance also stays much the same.
+
+- But the way that we have been drawing conclusions about a population
+of interest through t-tests and hypothesis testing looks very different in
+a Bayesian approach to inference.
+
+- In a frequentist approach, we worked hard to obtain a random sample,
+modeled the linear relationship between response and explanatory
+variables, and attached measures of confidence to them.
+
+**The Bayesian approach is useful for estimating a proportion, where
+you have a rough idea but you don’t have much data. Your uncertainty
+is described by a probability distribution called your prior distribution.**
+
+*In Bayesian statistics, the terms in Bayes’s rule have special names.*
+
+.1 The unknown parameter θ is considered a random variable—no
+longer fixed. We use a probability distribution ( normal, uniform,
+etc. ) to describe the uncertainty of the unknown parameter.
+
+.2 P( θ ) is the prior probability, which describes how sure we were that
+θ was true before we observed the data.
+
+.3 Once we have our data, we update the parameter distribution using
+Bayes’s theorem.
+
+.4 P( θ|data ) is the posterior probability. It describes how certain or
+confident we are that the hypothesis is true, given that we have
+observed data.
+
+Calculating posterior probabilities is the main goal of Bayesian
+statistics. P( data|θ ) is the likelihood. If you were to assume that
+θ is true, this is the probability that you would have observed the
+data. 𝑝( data ) is the marginal likelihood. This is the probability
+that you would have observed data whether θ is true or not. Using
+Bayes’s rule:
+
+```{r}
+P(Ø | X) ~ P(X | Ø)*P(Ø)/P(X)
+
+```
+```{r}
+posterior_of(Ø) ~ Inf ~ prior_of(Ø) * likehood
+```
+
+.5 The Bayes estimator of θ is either the mean or the median of the
+posterior distribution—you get to choose. In Bayesian statistics,
+both the mean and median are valid estimators.
+
+- The absolute loss function is as follows: $L( θ, ) = |θ − |$.
+```{r}
+cmStats$abs_loss_sym
+```
+
+- The squared loss function is as follows: $L( θ, ) = ( θ − )^2$
+```{r}
+cmStats$sqrt_loss_sym
+```
+
+.
+- For squared error loss, the posterior mean is the Bayes estimator.
+
+- For absolute error loss, the posterior median is the Bayes estimator.
+
+### BETA BINOMIAL DISTRIBUTION
+
+- The beta distribution is a common distribution that is used to
+describe our prior knowledge. It can be understood as representing
+a distribution of probabilities—that is, it represents all the possible
+values of a probability when we don’t know what that probability is.
+
+- In baseball, a batting average is the number of times a player gets a base
+hit divided by the number of times the player goes up at bat. The batting
+average lies between 0 and 1; a decent batting average ranges between
+0.25 and 0.27 while a batting average over 0.300 is excellent.
+
+- If we’re putting together a fantasy baseball league, we might want to
+predict the season’s batting average for a player at the beginning of the
+season. We have some prior information about batting averages: Most
+season averages range between 0.220 and 0.365.
+
+- There’s a binomial distribution lurking in the background, because at
+its core, the batting average represents a series of successes ( hits ) and
+failures ( misses ).
+
+The domain of the beta distribution is ( 0, 1 ), which lines up with the
+appropriate range for our batting average. We expect that the player’s
+season-long batting average will be most likely around 0.26 but that it
+could reasonably range from 0.20 to 0.36. This can be represented with
+a beta distribution with parameters 𝑎 = 78 and 𝑏 = 222:
+
+```{r}
+curve(dbeta(x, 78, 222))
+```
+Assuming a season with 300 at bats, 𝑎 = 78 represents the number of
+hits and 𝑏 = 222 represents the number of misses.
+The mean of the beta distribution is $𝑎/( 𝑎 + 𝑏 ) = 78/( 78+222 )$.
+And the distribution pretty accurately contains our prior belief of a
+batting average between ( 0.20, 0.36 ).
+
+```{r}
+78/( 78+222 )
+```
+
+The new beta distribution will be beta( 𝑎0+ hits, 𝑏0 + misses ), where 𝑎0
+and 𝑏0 are the parameters we started with—that is, 78 and 222.
+
+In this case, 𝑎 increases by 1 ( the player’s 1 hit ) while 𝑏 has not
+increased at all ( no misses yet ). That means that our new distribution
+is beta( 78 + 1222 ), or:
+
+```{r}
+curve(dbeta(x, 79, 222))
+```
+You can’t really tell the difference here, but there was a small shift.
+Suppose that halfway through the season the player has been up to bat
+300 times, hitting 105 out of those times. The new distribution would
+be beta( 79 + 105, 222 + 195 ).
+
+```{r}
+curve(dbeta(x, 79+105, 222+195))
+```
+The curve is now thinner and slightly shifted to the right to reflect the
+higher batting average. In fact, the new expected value is our posterior
+estimate of the player’s batting average. We can calculate it as $𝑎/( 𝑎 + 𝑏 )$.
+
+After 105 hits of 300 real at bats, the expected value of the new beta
+distribution is $𝑎/( 𝑎 + 𝑏 ) = ( 79 + 105 )/( 79 + 105 + 222 + 195 )$.
+
+```{r}
+( 79 + 105 )/( 79 + 105 + 222 + 195 )
+```
+
+Thus, the beta distribution is best for representing a probabilistic
+distribution of probabilities—the case where we don’t know what a
+probability is in advance but we have some reasonable guesses.
+
+
+The Bayesian framework allows us to dynamically update our prior beliefs
+by considering various types of distributions for our prior probability.
+
+In the absence of other information, a uniform ( or constant ) prior
+is often assumed, meaning that every possible value has the same
+probability of being selected.
+
+- Recall that a random variable has the uniform ( 0, l ) distribution if its
+probability density function is constant over the interval [0, 1] and 0
+everywhere else.
+
+```{r}
+tibble(du = dunif(0:1, 0, 100)) |> ggplot(aes(x = 1:0, y = du, )) +
+  geom_line() +
+  ggtitle("Uniform Prior") +
+  xlab("index")
+```
+```{r}
+# Use the segments() function to draw a single line from (0, 1) to (1, 1)
+
+# 1. Start a minimal plot canvas with the correct viewing limits
+plot(x = 0, y = 0, type = "n", 
+     xlim = c(0, 1), ylim = c(0.9, 1.1),
+     axes = FALSE, xlab = "", ylab = "", main = "") # Hide everything but the data space
+
+# 2. Draw the single constant line segment
+segments(x0 = 0, y0 = 1, 
+         x1 = 1, y1 = 1, 
+         lwd = 3, col = "black")
+```
+
+
+On the other hand, the beta ( 𝑎, 𝑏 ) distribution is another commonly
+used distribution for a continuous random variable that can only take
+on values [0, 1].
+
+It has the probability density function
+```{r}
+(factorial(a + b)/(factorial(a) * factorial(b))) * (x^(a - 1)) * (1 - cmStats$x)^(b - 1) 
+```
+where 𝛤( 𝑛 ) = 𝑛 − 1! and 0 < 𝑥 < 1.
+```{r}
+x ~ reals(l=0, r=1)
+
+cmStats$factorial_sym(cmStats$n - 1)
+```
+```{r}
+```
+
+- In the case of a binomial likelihood, any beta prior that we choose will
+give us a beta posterior distribution. When a prior and posterior belong
+to the same distribution family, this distribution is referred to as a
+conjugate prior. In this case, the beta distribution is a conjugate prior
+for the binomial likelihood.
+
+- Conjugate priors are immensely useful because they provide a simple
+analytic solution to this type of inference problem. We can easily know
+the mean and variance, for example.
+ۧ ۧ But conjugate priors are also somewhat limiting because our
+prior belief may not be representable using the conjugate family’s
+parameterization.
+
+### PITFALLS
+
+- One of the pitfalls of Bayesian statistics is that 3 different people can
+choose 3 different priors, analyze the same dataset, and get 3 different
+posteriors.
+
+- A good ( informative ) prior will typically be based on a very similar
+study done under similar conditions in the past. But these aren’t always
+available, or applicable, in every situation. It’s also not as easy to write
+out a posterior distribution that doesn’t come from a conjugate family. 
+
+- Suppose that your data followed a beta distribution and you wanted to use
+an exponential prior. The posterior would be a beta times an exponential
+distribution. We don’t know the mean or variance of that distribution. It’s
+actually more computationally intensive to try to estimate.
+
+- On the other hand, a Bayesian would complain that frequentist
+assumptions about long-run testing over an infinite number of
+hypothetical repetitions of the experiment may sound attractive but
+are not realistic. Bayesian methods better approach how we already
+think and the types of problems we often encounter.

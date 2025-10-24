@@ -1,0 +1,512 @@
+---
+title: "Hypothesis Testing—Innocent Until"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+Hypothesis testing is one of the workhorses of statistical inference. The
+goal of this lecture is crystal clear: to illustrate and explain the logic
+of hypothesis testing. Basically, that’s the core of the idea of statistical
+inference in general.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas);
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r}
+def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats;
+```
+Hypothesis testing is one of the most common statistical techniques
+used in education, psychology, social sciences, natural sciences,
+medicine, law, and every area to which statistics is applied.
+
+We’ll rst describe how hypothesis testing works in an example. Our null
+hypothesis is that if we spin a penny, it has a .5 probability of landing heads
+up. At the end of the whole hypothesis testing process, the crux of the decision
+of whether to reject the null hypothesis or not depends on quantifying how
+rare different possible outcomes of the experiment are.
+
+Thus, we need to investigate the possible outcomes of the coin experiment
+and how likely or unlikely each possible outcome is. We will spin the penny
+100 times.
+
+
+```{r}
+coins <- sample(c("T", "H"), size=100, replace = TRUE)
+
+cmStats$P(table(coins), 100)
+```
+
+```{r}
+coins_df = tibble(flips = coins)
+```
+
+```{r}
+ggplot( coins_df, aes(y = length(coins_df), x = flips)) +
+  geom_col()
+```
+Under our hypothesis, all possible outcomes are equally likely
+because each spin’s landing is independent of that of the other spins. We
+can make a graph in which the x-axis (the horizontal axis) tells how many
+heads are in the outcome and the y-axis tells how many of all the possible
+outcomes have exactly that many heads.
+
+Next, we do the experiment and analyze the results. We spin the coin 100
+times.
+
+```{r}
+coins_df = tibble(flips = sample(c("T", "H"), size=100, replace = TRUE))
+
+```
+
+```{r}
+ggplot( coins_df, aes(y = length(coins_df), x = flips)) +
+  geom_col()
+```
+```{r}
+count_table = table(coins_df)
+count_table
+```
+
+```{r}
+cmStats$P(count_table, 95)
+```
+
+
+The probability of getting
+that value or a value further from the mean is called the p value. It is the
+probability that under the assumption of the null
+hypothesis, an outcome as rare as (or rarer than)
+the actual outcome would happen. The smaller
+the p value, the more extreme the outcome.
+Our intuition that the result of the experiment
+is strong evidence against the null hypothesis
+is quanti ed and con rmed by the fact that the
+p value is very small.
+
+```{r}
+
+t.test(count_table)# not realy correct for the text below.
+```
+Under the assumption of the hypothesis, the
+computations show that the probability of getting
+the experimental results is very low; thus, the
+experimental results are strong evidence for rejecting the null hypothesis.
+The phrase reject the null hypothesis is the way of saying that the hypothesis
+about the world is unlikely to be true.
+
+
+Another example of hypothesis testing occurs if we are trying to determine
+whether or not a particular medication works by giving some people the
+medication and some a placebo and seeing whether there is a signi cant
+difference in the number who recover. For our experiment, we’ll take 100
+people, all with athlete’s foot, and have them use the medication for a week.
+After the week, we count how many people are free from athlete’s foot.
+
+Assume that we know that 40% of the time, a person’s athlete’s foot will
+disappear in a week without any medication. Thus, our null hypothesis is that
+each person has a 40% probability of cure with or without the medication
+(i.e., the medication has no effect). We’ll take as the alternative hypothesis
+that the probability of cure for people using the medication is different from
+40%. We also decide how extreme a result of the experiment will have to be
+for us to reject the null hypothesis.
+
+```{r}
+p_value = 0.05
+prob_null = 0.40
+```
+Our required signi cance level is 0.05, meaning that if the results of the
+experiment are so extreme that under the assumption of the null hypothesis,
+only 5 out of 100 experiments would yield a result that extreme or more
+extreme, we will reject the null hypothesis.
+
+```{r}
+p_value ~ cmStats$P(5, 100)
+```
+```{r}
+cmStats$P(5, 100)
+```
+In other words, if the p value is
+less than the signi cance level, we will reject the null hypothesis. We call
+such a result statistically signi cant. In the eld of statistics, signi cant does
+not mean “important.” Rather, it simply means that the signi cant item or
+event signi es something.
+
+```{r}
+free_foot = 51
+```
+
+Suppose that 51 of the 100 people who used the medication are free from
+athlete’s foot. In this case, the calculation gives the p value of
+
+```{r}
+(free_foot/100) - (prob_null / 2) + 0.01
+```
+the calculation gives the p value of 0.032, quite
+small. We conclude that it is very unlikely that the medication had no effect.
+Because the p value of 0.032 is less than the signi cance level of 0.05 that
+we speci ed before we did the experiment, we reject the null hypothesis.
+
+
+As another example, consider the question of whether the typical American
+male adult consumes an average of 2400 calories each day. We ask 25
+American adult males, and they average 2500.
+
+```{r}
+people = 25
+avg_cal = 2400
+reported_cal = 2500
+std_cal = 270
+```
+
+Unlike the previous examples, knowing just the sample mean is not
+enough information. We also need to know something about how spread
+out the population’s eating habits are, that is, the standard deviation of the
+population. If there is a huge variation from person to person in number of
+calories consumed, then the difference between the sample mean of 2500
+and the null hypothesis of 2400 is not as signi cant. The sample responses
+themselves give some information about the standard deviation of the
+population. Let’s suppose that the sample standard deviation (i.e., the spread
+in the 25 responses) is 270 calories.
+
+```{r}
+mans_cal_2400 = rnorm(1:people, mean = avg_cal)
+mans_cal_2500 = rnorm(1:people, mean = reported_cal, sd = std_cal)
+
+```
+
+```{r}
+t.test(mans_cal_2500, mu = reported_cal) # this conclusion needs to be review!
+```
+The general idea is exactly the same as in the previous examples. We do
+a calculation, based on the t distribution, that determines how extreme our
+sample is, assuming the null hypothesis is true. It turns out that a sample
+of mean 2500 calories and standard deviation 270 calories is not extreme,
+assuming the null hypothesis of 2400 calories and requiring a 0.05 level of
+significance. The p value is 0.085, greater than 0.05. We do not reject the
+null hypothesis. That is, the data would not warrant a conclusion that the
+average number of calories consumed by an American adult male is different
+from 2400.
+
+State a hypothesis about the way the world is. The hypothesis is called
+the null hypothesis and is often the opposite of what we actually think
+might be true.
+
+• State an alternative hypothesis. In the case where the null hypothesis
+is that the probability of something is a certain value, three standard
+possible alternative hypotheses exist:
+
+• The probability is different from the value stated in the
+null hypothesis.
+
+• The probability is greater than the value stated in the
+null hypothesis.
+
+• The probability is less than the value stated in the null hypothesis.
+
+• Declare what level of signi cance we require to reject the
+null hypothesis.
+
+• Do the experiment, gather the results, and compute the probability that,
+under the assumption of the null hypothesis, the results would be as
+extreme as (or more extreme than) the result we actually obtained. This
+gives a p value.
+
+• If the result is rare (p value smaller than our required level of
+signi cance), then we assert that the results are statistically signi cant,
+and we reject the null hypothesis:
+
+• Rejecting the null hypothesis means concluding that it is false.
+
+• Rejecting the null hypothesis also means concluding that the
+alternative hypothesis is true.
+
+• If the result is not rare (p value larger than our required level of
+signi cance), then we do not reject the null hypothesis.
+# Concept and Applications
+
+## INTERVAL ESTIMATES AND CONFIDENCE INTERVALS
+
+When we calculate a point estimate, our chances
+of hitting the target population parameter are
+not very likely. We’ll often get close but will
+seldom hit the mark. In this lecture, you will learn about
+confidence intervals, with which we can increase our
+chances of capturing the true population parameter.
+
+### CONFIDENCE INTERVALS
+
+A confidence interval draws inferences about a population by estimating
+the value of an unknown parameter using an interval. We’re looking
+for an interval that covers the true population parameter with some
+amount of certainty or confidence.
+
+But the problem is that a different random sample ( with different
+observed values ) would yield different estimates for μ. Which of those
+estimates ( the sample mean from our first sample or the sample mean
+from our second sample ) would be closest to the true value? We’d really
+have no way of knowing.
+
+To create a confidence interval, we start with the point estimate ±
+estimation error. If our interval is narrow, that means that our estimate
+is precise.
+
+Let X1, X2, … X𝑛 be a random sample from a normal distribution with
+μ and σ. We know that regardless of sample size 𝑛, X is normally
+distributed with expected value μ and standard deviation . We get
+this from the central limit theorem.
+
+```{r}
+cmStats$Z_score_sym(X)
+```
+```{r}
+Z = 0.95 ~ P(-1.96 < Z, Z < 1.96)
+```
+
+We’ve just found a random interval.
+
+```{r}
+confiden_interval <-  list(cmStats$X - 1.96 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n), cmStats$X + 1.96 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n))
+
+confiden_interval # centered at X.
+```
+### CONFIDENCE LEVELS
+
+Confidence intervals allow us to estimate population parameters using a range of values—a range of values that are more likely to capture the true population parameter.
+
+To do that, we need to set the confidence level, which tells us how likely it
+is that the population parameter is actually contained in the confidence
+interval. It’s a measure of the degree of the reliability of the interval.
+
+In statistics, we typically use a confidence level of 95%, but we could
+specify any confidence level as ( 1 − α )100%. Note that when α = 0.05,
+we get the 95% confidence level. This means that 95 out of 100 samples
+( 95% ) from the same population will result in a confidence interval
+that contains the true population parameter.
+```{r}
+(1 - 0.05) * 100 / 100
+```
+
+### 95% CONFIDENCE INTERVALS
+
+After observing X1 = 𝑥1, X2 = 𝑥2, …, X𝑛 = 𝑥𝑛 from a normal distribution
+with known σ, we compute the sample mean X . The 95% confidence
+interval for the population mean μ is
+
+```{r}
+confiden_interval
+```
+We can also say with 95% confidence,
+```{r}
+list(confiden_interval[1], cmStats$mu, confiden_interval[2]) # mu is between the interval.
+```
+Suppose that a normal population has unknown μ and σ and X = 80.0, what is the 95% confidence interval for μ?
+
+```{r}
+subs(cmStats$X - 1.96 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n), list(X = 80, n = 31, σ = 2.0))
+```
+```{r}
+-0.0632258064516129 * sqrt(31) * 2.0 + 80
+    
+```
+
+```{r}
+subs(cmStats$X + 1.96 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n), list(X = 80, n = 31, σ = 2.0))
+```
+```{r}
+0.0632258064516129 * sqrt(31) * 2.0 + 80
+```
+Given a 95% confidence interval, is it correct to say that μ falls in the
+confidence interval with probability 0.95?
+
+When we substitute X with the observed value, x , there’s no randomness
+left. For a particular sample, either μ is in the interval or it isn’t.
+
+A precise way to interpret confidence interval is that with 95%
+confidence, the interval calculated includes μ. It’s the confidence
+interval itself that is random ( i.e., it changes for each sample ); μ is just
+a fixed number ( the population mean ). 
+
+It is nonrandom, but we usually
+don’t know what it is. That’s why we’re taking a sample.
+ۧ ۧ The 95% means that we used a method that captures the true mean
+95% of the time.
+
+Let’s define zα/2 as our critical value. This is the value such that
+$P( Z >zα/2 ) = P( Z < −zα/2 ) = α/2, where Z ~ N( 0, 1 )$.
+
+### OTHER CONFIDENCE LEVELS
+
+We’re not limited to a 95% confidence interval. We can also specify
+other alpha ( α ) levels.
+
+ When α equals 0.1, that gives us 90% confidence. We have to divide
+0.1 by 2 to get the area that’s left in the tails.
+ 
+ Likewise, when α equals 0.05, we get 95% confidence and 2.5 % left
+in each of the tails.
+ 
+ When α equals 0.01, we get 99% confidence and 0.5% area in each of
+the tails.
+
+```{r}
+list(cmStats$X - cmStats$Z_alpha/2 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n), cmStats$X + cmStats$Z_alpha/2 * cmStats$sigma/cmStats$sqrt_sym(cmStats$n))
+```
+Several of the most commonly used zα/2’s are as follows.
+```{r}
+tibble(
+  level = c("alpha/2" , "Z_alpha/2"), 
+  "90%" = c(0.05, qnorm(0.05)), 
+  "95%" = c(0.025, qnorm(0.025)), 
+  "99%" = c(0.005, qnorm(0.005)) 
+)
+
+```
+### POINT ESTIMATES AND CONFIDENCE
+
+The Organic Milk Association produces organic gallon milk for more
+than half of the United States. The company claims that, due to
+manufacturing upgrades, they are confident that the average amount
+of milk in each gallon container they ship has a volume of 128 ounces.
+
+We can use R to simulate a population of amounts of milk in 10,000 milk
+jugs. We assume some distribution function and randomly create
+10,000 data points in a variable called “milk.”
+
+```{r}
+set.seed(343)
+milk = 129 - rexp(100000,0.95)
+hist(milk, main="Histogram
+of Milk Population",
+col="red")
+```
+The histogram sample is skewed
+on the left ( meaning that the
+data is piled up on the right ).
+
+```{r}
+true_mean = mean(milk)
+true_sd = sd(milk)
+true_mean
+```
+```{r}
+true_sd
+```
+We can take a sample from our population to see how close we are to
+the actual true mean.
+```{r}
+set.seed(343)
+sample_milk <-  sample(milk, size = 50, rep = T)
+sample_mean <- mean(sample_milk)
+sample_mean
+```
+
+```{r}
+sample_mean - true_mean
+```
+Our sample mean is only slightly larger than the population mean, by
+0.04 ounces.
+
+We can calculate the 95% confidence interval for the sample mean in R.
+
+```{r}
+n = 50
+sample_milk <-  sample(milk, size = n, rep = T)
+sample_mean <- mean(sample_milk)
+sample_mean - 1.96 * sd(sample_milk) / sqrt(n)
+```
+
+```{r}
+sample_mean + 1.96 * sd(sample_milk) / sqrt(n)
+
+```
+
+This is a box plot of our data, with population on the left and sample on
+the right.
+
+```{r}
+boxplot(milk, sample_milk)
+```
+Our point estimate based on a sample of just 50 milk jugs only slightly
+overestimates the true population. This illustrates an important point:
+We can get a fairly accurate estimate of a large population by sampling a
+relatively small subset of individuals.
+
+But what might the central limit theorem tell us about this population?
+Remember, the central limit theorem says that no matter what the
+shape of the population distribution, the shape of the distribution of
+sample means is approximately normal.
+
+Suppose that we take 1000 samples of size 𝑛 = 50 and look at the sample
+distribution.
+
+```{r}
+milk_mean <- mapply(\(v) mean(sample(milk, n, rep=T)), 1:1000)
+
+hist(milk_mean)
+
+```
+
+The distribution of sample means looks more like a normal distribution
+than the distribution of the population.
+
+How normal is the distribution of 1000 sample means? One way to
+quantify this is to make the normal quantile-quantile ( Q-Q ) plot
+comparing the quantiles of our distribution against the quantiles of a
+truly normal distribution.
+
+```{r}
+qqnorm(milk_mean)
+qqline(milk_mean)
+```
+We want to compute some confidence intervals from our samples.
+In this ( artificial ) case, we know the population parameters: μ ( the
+population mean ) and σ ( the population standard deviation ). We can
+use R to calculate the confidence intervals.
+
+Now let’s return to our samples of size 𝑛 = 50 and take 100 such samples.
+
+```{r}
+
+sampe_mean <- mapply(\(v) mean(sample(milk, n, rep=T)), 1:100)
+hist(samp_mean)
+
+```
+```{r}
+m = 20; n = 50; mu = mean(milk);
+sigma = sd(milk);
+SE = sigma/sqrt(n)
+alpha = 0.10 ; zcrit = qnorm(1-alpha/2);
+matplot(rbind(samp_mean[1: m] - zcrit*SE, samp_mean[1: m]
++ zcrit*SE),
+rbind(1: m,1: m),
+type="l", lty=1,lwd=2,
+col='darkgray',
+xlab = "Ounces",
+ylab="Confidence Intervals",
+main="90% Conf. Int.");
+abline(v=mu)
+```
+
+The 80% confidence interval
+has shorter lines that the 90%
+confidence interval and is less
+likely to cover the true
+population mean.
+
+Note that we use qnorm( 0.975 )
+to get the desired z critical
+value instead of qnorm( 0.95 )
+because the distribution has
+2 tails.

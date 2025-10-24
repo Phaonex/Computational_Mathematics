@@ -1,0 +1,452 @@
+---
+title: "Law—You’re the Jury"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+[C]ertainly, in the law, there are many places where statistical data and
+inferences are used to help in making legal decisions. In this lecture,
+we’re going to look at two cases where you will be the jury.
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r}
+def_sym("X", "Y", "R")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+
+We’ll look at two main examples of courtroom drama where we
+imagine ourselves on the jury. We’ll present the facts, and it will
+be up to us to determine what conclusions are appropriate to
+draw. We begin with a hit-and-run accident.
+
+This example illustrates a surprising statistical
+anomaly known as Simpson’s Paradox. 
+
+We will present the evidence; you determine the verdict.
+
+• Mr. Jones witnessed a hit-and-run accident involving a cab.
+
+• Mr. Jones stated that he thought the cab was blue.
+
+• The jury has come to the conclusion that a guilty verdict hangs on
+whether or not Mr. Jones’s testimony implies that the probability that
+the cab was blue is over 50%.
+
+• We did some experiments to determine how accurate Mr. Jones’s vision
+was. He was able to correctly identify the blue cabs as blue 80% of
+the time and the green cabs as green 80% of the time. The prosecutor
+summarized the situation by saying that Mr. Jones is 80% sure the cab
+was blue; therefore, the jury should convict.
+
+Some additional information was presented:
+
+• There are exactly 100 cabs in the city.
+• 90 are green cabs and 10 are blue.
+
+```{r}
+cabs_n = 100
+blue_cabs = 10
+green_cabs = 90
+```
+
+Let’s do the following thought experiment: Suppose instead of having one
+accident, all 100 cabs in the city simulated this accident. Each one did it
+once. How many times would Mr. Jones have testified that the cab was blue?
+Following the logic, we see that he would testify “blue” 26 times, but only 8
+of those times would the cab actually be blue.
+
+```{r}
+cmStats$P(blue_cabs, cabs_n) 
+cmStats$P(green_cabs, cabs_n)
+
+```
+
+Another case that demonstrates the same statistical issue about testing for rare
+events arises when considering random drug testing in a company. Suppose
+the company has 280,000 employees, of whom 500 employees actually use
+the illegal drugs that are the target of this policy. Suppose the drug test will
+correctly read positive for 95% of people who actually use those drugs; thus,
+475 employees who use drugs would receive a positive test result. 
+
+```{r}
+employees_n = 280000
+under_substances = 500
+tested_positive = 475
+```
+
+Now suppose that the test gives a false positive
+1% of the time; of the 279,500 employees
+who do not use drugs, 1% will get a false-
+positive result. That is, the drug test will
+read positive for 2795 employees who do
+not, in fact, use drugs.
+
+```{r}
+employees_n - under_substances
+cmStats$P(under_substances, employees_n)
+```
+
+```{r}
+employees_n - tested_positive
+cmStats$P(tested_positive, employees_n)
+```
+```{r}
+employees_n - under_substances - tested_positive
+cmStats$P(employees_n - under_substances - tested_positive, employees_n)
+```
+
+The total number of employees whose drug
+tests are positive will be 475 + 2795 = 3270
+employees.
+
+```{r}
+tested_positive + (employees_n - tested_positive)
+```
+
+Therefore, if an employee gets
+a positive test result, his or her chance of actually using drugs is 475/3270,
+or less than 15%. Thus, there is a great danger of inappropriate rings or
+accusations based on positive drug testing.
+
+```{r}
+cmStats$P(tested_positive, tested_positive + (employees_n - tested_positive))
+
+```
+
+We now turn to gender discrimination. To determine discrimination by
+gender, race, religion, or age, it is natural to look at data about treatment
+of specific groups. Let’s consider a case of admissions to a program at a university.
+For the purposes of this example, let’s assume that 1000 men
+applied and 1000 women applied to the program and that all 2000 applicants
+had exactly the same qualifications. Here are the facts:
+
+```{r}
+mans <- 1000
+womens <- 1000
+
+applicants_n = mans + womens
+```
+
+There was a 70% acceptance rate for the men and only a 40% acceptance
+rate for the women. It appears that the women were clearly discriminated
+against, and of course, we are outraged. The chi-square test can identify the
+acceptance rate you would expect from random chance alone.
+
+```{r}
+excellent_app_n = (mans - 800) + (womens - 200)
+
+mediocre_app_n = (mans - 200) + (womens - 800)
+
+```
+
+But let’s look at the case more deeply. Suppose the total program to which
+the 2000 applied actually had two subprograms. One subprogram was an
+Excellent Program to which 200 men applied and 800 women applied. The
+other subprogram was a Mediocre Program to which 800 men applied and 200
+women applied. Of the 200 men who applied to the Excellent Program, 20%
+were accepted. Of the 800 women who applied to the Excellent Program, 25%
+were accepted.
+```{r}
+cmStats$P((mans - 800), excellent_app_n) + .20
+```
+```{r}
+cmStats$P((womens - 200), excellent_app_n) + .25
+
+```
+In the Mediocre Program, 800 men applied and 82.5% were accepted,
+while 200 women applied to the Mediocre Program and 100%
+were accepted. In each subprogram, a higher percentage of women were
+accepted. This situation is an anomaly, because overall, it appeared that
+the women were being discriminated against; however, looking at the
+subprograms we see a different picture.
+
+```{r}
+cmStats$P((mans - 200), mediocre_app_n) + 82.5
+
+```
+
+```{r}
+(cmStats$P((womens - 800), mediocre_app_n) + 1.0)
+
+```
+This scenario is an illustration of a phenomenon known as Simpson’s
+Paradox, that is, a situation where both subprograms indicate that the
+women are being treated better, yet overall, the men appear to be treated
+better. Given that the women actually had a higher acceptance rate in each
+subprogram, let’s think about how we would decide whether the differences
+in acceptance rates are serious enough to be viewed as clear discrimination
+or whether the differences could be reasonably accounted for as the result of
+simple random luck.
+
+
+Let’s look at a table that records the data:
+
+```{r}
+excellent_app_df <- tibble(
+  applicants = c("women", "men", "total"), 
+  accept = c(40, 200, 240),
+  reject = c(160, 600, 760),
+  total = c(200, 800, 1000),
+  accept_rates = c(.20, .25, .24)
+    )
+excellent_app_df
+
+mediocre_app_df <- tibble(
+  applicants = c("women", "men", "total"), 
+  accept = c(660, 200, 860),
+  reject = c(140, 0, 140),
+  total = c(800, 200, 1000),
+  accept_rates = c(.82, 1.0, .86)
+    )
+mediocre_app_df
+```
+How rare an event would it be to have one acceptance rate as much as 5%
+less than the other? To determine how surprised we should be at getting a 5%
+difference in acceptance rates, we can look at a normal probability curve that
+tells us the probability of different deviations.
+The gender discrimination case illustrated a statistical anomaly known as
+Simpson’s Paradox. Simpson’s Paradox is an example of a possible effect
+of a lurking variable. In that case, the lurking variable was the existence of
+the subprograms.
+
+In this lecture, we saw how a witness’s testimony was not as compelling
+as it at rst appeared. We saw that universal or random drug tests present
+problems because of false positives. In the gender-discrimination case, we
+saw an example of Simpson’s Paradox; we also saw how the principles
+of hypothesis testing helped us to interpret evidence as indicative of
+discriminatory practices or not.
+# Concept and Applications
+
+## LINEAR REGRESSION MODELS AND ASSUMPTIONS
+
+n regression, we look at the association between 2 or
+more quantitative variables. We’re going to begin to
+look for whether one variable causes or predicts changes
+in another variable. The response variable, which is the
+dependent variable, might measure an outcome of a study
+or experiment. The explanatory variable, which is the
+independent or predictor variable, explains or is related
+to changes in the response variable. We now have pairs
+of observations: $( 𝑥1, 𝑦1 ), ( 𝑥2, 𝑦2 ), …, ( 𝑥𝑛, 𝑦𝑛 )$. In linear
+regression, we’re looking for the association between
+2 variables to be centered on a line. In essence, we’re
+looking for the effect that one variable has on another.
+
+### LINEAR REGRESSION
+
+Imagine that we are wheat farmers in Kansas. For the past 10 years, at
+the end of the season, we’ve recorded the total amount of rainfall and
+the average height of our wheat. We’d like to know if rainfall has any
+effect on our wheat yield.
+
+We have 10 data points, each recording the amount of rainfall ( measured
+in inches ) and wheat growth ( in inches ). Here’s our data in R:
+
+```{r}
+rainfall = c(3.07,3.55,3.90,4.38,
+4.79,5.30,5.42,5.99,6.45,6.77)
+wheat = c(78,82,85,91,92,96,97,104,111,119)
+summary(cbind(rainfall, wheat))
+```
+Notice that our scatterplot shows that there might be a linear
+relationship between rainfall and wheat yield.
+
+```{r}
+plot(rainfall, wheat)
+```
+We can summarize the relationship between the 2 variables by
+fitting a regression line, which is a straight line that describes how a
+response variable 𝑦 changes as an explanatory variable 𝑥 changes and
+minimizes the squared difference ( also called residuals ) between each
+observation and the fitted line.
+
+Our linear regression model, with unknown parameters, looks like this:
+$𝑦 = β0 + β1𝑥 + 𝜖$, where $β0$ is the 𝑦-intercept, $β1$ is the slope, and $𝜖$ is the
+error term.
+
+R will conveniently fit a linear regression for us. We use the function
+“lm,” which stands for linear regression. After “lm” comes our response
+variable, “wheat,” followed by a tilde, which tells R that we want to
+model wheat on the explanatory variables that follow it. In this case,
+that’s rainfall.
+
+```{r}
+reg <-  lm(formula = wheat ~ rainfall)
+reg
+```
+With the summary statistics for the residuals, we can quickly see if
+our residuals have any outliers and check to see that the median is
+close to 0.
+
+“Coefficients” is where we find our estimates: 0 = 45.0408 ( the
+𝑦-intercept term ) and 1 = 10.1691 ( our slope coefficient for wheat ).
+
+The following is a plot of our wheat data with the estimated regression
+line.
+
+```{r}
+qqnorm(reg$residuals)
+qqline(reg$residuals, lwd=2, col="red")
+```
+### PREDICTIONS
+
+We can use a regression line to predict the value of the response
+variable 𝑦 for a specific value of the explanatory variable 𝑥. This value is
+called a predicted value or fitted value.
+
+Be careful about extrapolations. We can’t conclude that the regression
+line is an accurate model outside our sample data. In other words, just
+because our data supports a linear relationship between 𝑦 and 𝑥 doesn’t
+mean that that relationship holds for values outside the range of 𝑥.
+Predictions of 𝑦 for values of 𝑥 that are far away from the actual data
+range often aren’t accurate.
+
+Let’s use our regression equation to actually
+predict the wheat yield.
+
+```{r}
+ŷ = reg$coefficients[1] + reg$coefficients[2] * X
+ŷ
+```
+
+With 5 inches of rain:
+
+```{r}
+ŷ = reg$coefficients[1] + reg$coefficients[2] * 5
+ŷ
+```
+With 100 inches of rain:
+
+```{r}
+ŷ = reg$coefficients[1] + reg$coefficients[2] * 100
+ŷ
+```
+
+### RESIDUALS
+
+We need a way of understanding how well our regression line fits the
+data. The residuals help us do just that. A residual is the difference
+between an observed value $( Yi )$ and the value predicted by the
+regression line $( Ŷi ): ei = 𝑦i − ŷi$.
+
+
+Some people get confused at this point, because it seems like the
+residuals, $e_i$, are the same as our errors, $𝜖_i$.
+
+
+𝜖 measures the deviation of the observed value $( 𝑦 ) $from the
+unobservable, true regression line.
+ۧ ۧ The residuals, on the other hand, measure the difference between the
+observed value $( 𝑦i )$ and the estimated regression line $( ŷi )$.
+
+A good plot, with some great residuals, looks like total randomness. There’s no pattern. And approximately the same number of points
+will be above and below the $e = 0$ line. A bad plot has some obvious pattern, such as a funnel shape or parabola. There might be more points above $0$ than below ( or vice versa ).
+
+The “no problem” graph is an example of a good residual plot. The data values are nicely centered at $0$, and the points are well balanced above and below the line at $𝑦 = 0$.
+
+The following is a residual plot of the
+wheat data. There appears to be a
+pattern, but because there are so few
+data points, it’s best if we look at a
+quantile-quantile ( Q-Q ) plot—which
+confirms that our data, even though
+it’s small, satisfies the normality
+assumption.
+
+```{r}
+rainfall = c(3.07,3.55,3.90,4.38,4.79,
+5.30,5.42,5.99,6.45,6.77)
+wheat = c(78,82,85,91,92,96,97,104,111,119)
+wheat.lm = lm(wheat~rainfall)
+plot(wheat.lm$fitted.values,wheat.lm$residuals,
+main = "Residuals vs. Fitted Values",
+xlab = "Fitted Wheat Values", ylab = "Residuals")
+abline(h=0, col="red")
+```
+```{r}
+qqnorm(residuals(lm(wheat~rainfall)))
+qqline(residuals(lm(wheat~rainfall)), lwd=2, col="Blue")
+
+```
+### ASSESSING MODEL FIT
+
+Now that we’ve fit a linear model to our data, we need to figure out how good it is. How well does it fit our data? Is the model strong enough that
+we could get good predictions from it? The following terminology will
+help us asses model fit.
+
+The regression sum of squares ( SSR ) measures the variation in ŷi.
+
+```{r}
+SSR <-  sum_((cmStats$y_hat - X)^2, cmStats$i, 1, cmStats$n, doit = FALSE)
+SSR
+```
+The error sum of squares ( SSE ) measures the residual variation in 𝑦
+due to error. This is the sum of our residuals squared.
+
+```{r}
+SSE <-  sum_((Y - cmStats$y_hat)^2, cmStats$i, 1, cmStats$n, doit = FALSE)
+SSE
+sum_(cmStats$e^2, cmStats$i, 1, cmStats$n, doit = FALSE)
+
+```
+The total sum of squares ( SST ) measures the total variation in 𝑦.
+
+```{r}
+SST <-  sum_((cmStats$y - Y)^2, cmStats$i, 1, cmStats$n, doit = FALSE)
+
+SST
+```
+Note: $SST = SSR + SSE$.
+The coefficient of determination, R2, is the fraction of the variation in 𝑦
+that can be explained by the linear regression of 𝑦 on 𝑥.
+
+```{r}
+SSR + SSE
+```
+
+```{r}
+R_sqr <- SSR/SST
+R_sqr
+
+1 * (SSE/SST)
+
+```
+An R2 of 0 means that the 𝑦 cannot be predicted linearly from 𝑥. An
+R2 of 1 means that the 𝑦 can be predicted without error from 𝑥. An R2
+between 0 and 1 indicates the extent to which 𝑦 is predictable by 𝑥. ( An
+R2 of 0.10 means that 10% of the variance in 𝑦 is predictable from 𝑥; an
+R2 of 0.80 means that 80% is predictable. )
+
+
+We can’t forget to check our model
+assumptions.
+
+To check for normality, we look at a
+normal Q-Q plot of the residuals.
+
+To check for constant variability, we
+check the residual plot.
+
+To check for independence, we
+examine the way in which subjects/
+units were selected in the study or
+how the data was collected.
+
+To check for linearity, we check a scatterplot or a residual plot.
+
+It’s always important to check that the assumptions of the regression
+model have been met; otherwise, our results won’t be valid.
+

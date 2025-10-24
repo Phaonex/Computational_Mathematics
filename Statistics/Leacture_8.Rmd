@@ -1,0 +1,300 @@
+---
+title: "Title"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+The foundation of statistical inference is comparing the results that we
+nd from actual data that we collect with what we should expect from
+random processes. But our intuition about what we are supposed to
+expect from a random process is often far from accurate.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(RColorBrewer)
+
+```
+
+```{r}
+def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+
+When every possible outcome of an experiment is equally likely, it is easy
+to calculate the probability of an outcome. If a coin is equally likely to land
+heads as tails when ipped, we say the probability of heads is 50% (or 0.5).
+For a fair die, the probability is 1/6 of rolling a 4, for example. For cases
+where possible outcomes are not equally likely, the probability of a possible
+outcome means the fraction of the time that the outcome will occur.
+
+```{r}
+coins <- sample(c("T", "H"), size=100, replace = TRUE)
+
+cmStats$P(table(coins), 100)
+```
+```{r}
+dice <- sample(c(1:6), size=100, replace = TRUE)
+
+cmStats$P(table(dice), 100)
+
+```
+
+Randomness becomes more subtle the more we think about it. When ipping
+a coin, in what sense is the outcome a random event? Once we let the coin
+go, physics determines what the outcome will be. Interestingly, in quantum
+physics, the basic model of particles is inherently probabilistic.
+
+
+We humans have bad intuition about probabilities. The following is an
+example that is surprising to most people. Suppose there are 50 random
+people in a room. What is the probability that two of them will have the
+same birthday? The surprising answer is that there is a 97% chance that two
+of them will have the same birthday.
+```{r}
+start_day <- 366 - 50 + 1
+
+prod(mapply(\(v) cmStats$P(v, 366), start_day:366))
+```
+
+The product of all the fractions is about 0.03. Thus, the probability that no
+two people have the same birthday is only about 3%. Hence, the chance that
+two people do have the same birthday is about 97%.
+
+
+When two fair dice are thrown and summed, not all possible sums are equally
+likely. Suppose you have a red die and a black die, and each is a fair die.
+There are six ways of getting the sum 7: red 1, black 6; red 2, black 5; and
+so on. We can draw a histogram showing how many ways there are to get
+each of the numbers 2 through 12. The histogram has a peak over the value
+7. When three fair dice are thrown and summed, the histogram of possible
+sums is more peaked than the histogram for two dice.
+```{r}
+purrr::map(1:6, \(d) sum(c(d, 7 - d)))
+```
+```{r}
+(7 - 1) / prod(c(6, 6))
+```
+```{r}
+cmStats$P(1, 6)
+```
+```{r}
+dice_red <- sample(c(1:6), size=100, replace = TRUE)
+dice_black <- sample(c(1:6), size=100, replace = TRUE)
+
+sum(outer(dice_red, dice_black, FUN = "+") == 7)
+
+```
+```{r}
+counts <- table(purrr::map2_dbl(dice_red, dice_black, \(x, y) x + y))
+counts
+```
+
+```{r}
+hist(counts)
+```
+Saying that the histogram is more
+peaked is saying that the standard
+deviation is smaller. In fact, the
+standard deviation for the case of
+100 dice is 1/10 of the standard
+deviation for the case of a single die. If we used 1 million dice, we would get
+an extremely peaked histogram: The standard deviation would be only 1/1000
+of the single-die case. The standard deviation decreases proportionately as
+the square root of the number of dice increases. The fact that the histogram
+becomes more peaked as the number of thrown dice increases is really an
+illustration of the central limit theorem.
+
+```{r}
+dice_red <- sample(c(1:6), size=1000, replace = TRUE)
+dice_black <- sample(c(1:6), size=1000, replace = TRUE)
+
+sum(outer(dice_red, dice_black, FUN = "+") == 7)
+
+```
+```{r}
+counts <- table(purrr::map2_dbl(dice_red, dice_black, \(x, y) x + y))
+counts
+```
+
+```{r}
+hist(counts)
+```
+
+The central limit theorem implies that for a
+fairly large sample size n, the distribution of the sample means is close to
+the normal distribution centered at the same mean as the population mean
+and with a standard deviation approximately equal to the standard deviation
+of the original distribution divided by the square root of n. The central limit
+theorem is one of the workhorses of statistical inference.
+
+**These sample means have a distribution that is
+approximated by a normal distribution.**
+
+In the next lectures, we will see how our ability to understand probabilities
+lies at the heart of the logic of statistical inference.
+
+# Concept and Applications
+
+## SAMPLE SIZE AND SAMPLING DISTRIBUTIONS
+
+Statisticians are often called on to do consulting,
+whether for individuals, companies, or nonprofits.
+This lecture focuses on a consulting example
+involving a large metropolitan city that is considering
+building a new hospital to meet the needs of residents.
+They want to survey the population to better understand
+the typical emergency room ( ER ) demand so that
+they can plan an appropriate number of beds.
+
+### SAMPLE MEANS
+
+One thousand residents are sampled and their number of visits to the
+ۧ
+ER are recorded. The number of times a person visited the ER ranges
+from 0 to 59 times in a year. The counts for each visit are given in
+the vector “counts.” The vector “visits” repeats each “time” for each
+corresponding “count.”
+
+```{r}
+times <- (0: 59)
+
+counts <- c(49, 51, 50, 85, 47, 61, 29, 29, 32, 21, 36,
+38, 30, 27, 24, 34, 38, 37, 24, 32, 26, 23, 27, 22, 19,
+10, 10, 12, 13, 8, 12, 5, 6, 6, 1, 11, 2, 4, 2, 1, 3, 0,
+0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1)
+
+visits <- rep.int(times, counts)
+
+```
+
+
+The following histogram displays information about the distribution
+of visits for our population of 1000 residents. Notice the shape of the
+distribution.
+
+```{r}
+hist(visits)
+```
+If we look at different samples of residents and their mean number of
+visits, how would the estimate change? What if our sample size was
+100? 10,000? Let’s investigate how the distribution of a collection of
+sample means changes as the sample size increases.
+
+```{r}
+mean.age <- function(n){
+  trials = 1000
+  my.samples <- matrix(sample(visits, size = n * trials, replace = TRUE), trials)
+  
+  means <- apply(my.samples, 1, mean)
+  means
+}
+```
+
+The function mean.age( 𝑛 ) performs 1000 times the experiment of
+drawing a sample of visits of size 𝑛 at random with replacement from
+our dataset. This is called bootstrapping a sample from data.
+
+```{r}
+par(mfrow=c(1, 2))
+means_variances = c(1, 2, 10, 20, 100, 200)
+
+plots_mean_er =function(m) {
+  hist(mean.age(m), main = sprintf("Mean of  %s, Visit", m), xlab="Number of Visits")
+  hist(visits, main="ER Visits Data ", xlab=" Number of Visits")
+}
+
+mapply(plots_mean_er, means_variances)
+```
+
+### VARIANCE OF X N
+
+We see from the histograms that the distribution of the sample mean
+X 𝑛 becomes narrower as 𝑛 increases. In other words, the variance
+decreases as the sample size gets larger.
+ۧ ۧ Let’s see if there’s a functional relationship between the variance
+distribution of the sample mean X 𝑛 and the sample size 𝑛. We can
+calculate the variances of mean.age( 1 ), mean.age( 2 ), mean.age( 10 ),
+mean.age(20), mean.age( 100 ), and mean.age( 200 ) with a function
+called “vars.”
+
+```{r}
+variances <- data.frame(n=means_variances, variance = mapply(\(m) var(mean.age(m)), means_variances))
+variances
+```
+
+Let’s look at the relationship of variance with sample size 𝑛.
+```{r}
+plot(variances$n, variances$variance)
+```
+In addition to becoming narrower, the shape of X 𝑛’s distribution
+changes from being skewed to becoming symmetric and bell-shaped,
+like the normal distribution, as 𝑛 becomes larger.
+
+### QUANTILE-QUANTILE PLOTS
+
+We can test how close the distribution of X 𝑛 is to the normal distribution
+by examining quantile-quantile ( Q-Q ) plots. In a Q-Q plot, quantiles of
+the sample are plotted against quantiles of a proposed distribution,
+also known as theoretical quantiles.
+
+```{r}
+par(mfrow=c(2,3))
+mapply(\(m) qqnorm(mean.age(m)), means_variances)
+
+```
+If the points of a Q-Q plot fall on a straight line, this indicates that the
+sample data are consistent with the proposed distribution ( here, the
+normal distribution ). As 𝑛 increases, what changes in the Q-Q plots?
+
+### SHAPIRO-WILK TEST
+
+```{r}
+par(mfrow=c(2,3))
+mapply(\(m) shapiro.test(mean.age(m)), means_variances)
+
+```
+
+### SAMPLING DISTRIBUTIONS
+
+A statistic is a value computed from data. In our example, our statistic is
+the average number of ER visits.
+
+Is a statistic a random variable? Recall that a random variable is a
+numeric value associated with the outcome of an experiment. It has a
+distribution, a mean ( expected value ), and a variance.
+
+Because data constitute a random realization of an experiment, each
+time we run the experiment, we will get a different value for our statistic.
+So, in fact, it has a distribution, a mean ( expected value ), and a variance.
+
+**In other words, as our sample size increases, any distribution—normal
+or not—will have a mean that tends to behave normally.**
+
+### THE CENTRAL LIMIT THEOREM
+
+In the field of statistics, it’s rarely possible to collect all of the data from
+an entire population. Instead, we can gather a subset of data from a
+population and then use statistics for that sample to draw conclusions
+about the population.
+
+The 2 most common characteristics that we use to define a population
+are its mean and standard deviation. And when data comes from a
+normal distribution, we immediately have an idea of the data’s shape.
+
+The mean tells us the center of that distribution. The standard deviation
+tells us the spread. 
+
+**The central limit theorem tells us that, no matter
+what the population distribution looks like, the distribution of the
+sample means will approach a normal distribution.**

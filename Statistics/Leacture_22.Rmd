@@ -1,0 +1,480 @@
+---
+title: "Economics—“One” Way to Find Fraud"
+output: html_notebook
+---
+
+# Foundational Concepts
+
+In today’s lecture, we’re going to be talking about economics.
+Economics is certainly one of the most common arenas in which we
+think of statistical data as being centrally important, and it is.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(TSA)
+data(airpass)
+```
+
+```{r}
+def_sym("X", "Y", "CPI_CY", "CMBCY", "CMBBY", "theta", "Theta", "Theta_q", "phi", "phi_p", "e_t", "e_t_1", "e_t_q", "Y_t_p")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+
+```
+Economics is one of the most common arenas in which statistical data
+are important. Data arise when we measure incomes and wealth, the
+balance of trade, the de cit, the stock market, the consumer price
+index, and employment levels. All these data are indications of the economic
+condition of the world and make real differences in our daily lives. The
+consumer price index in uences such things as tax rates and Social Security
+bene ts. Looking at historical trends is a suggestive method of getting a
+sense of how the world is changing. However, in some cases, looking at
+historical trends is a poor method for predicting the future. For example, it
+is a bad strategy to buy mutual funds based on last year’s performance. A
+surprising feature of tables of data in economics is that the leading digits of
+numbers do not occur with equal frequency. This unexpected reality, whose
+full formation is called Benford’s Law, gives us an unexpected statistical
+method for detecting fraud.
+
+### CPI
+
+The national debt re ects one aspect of the country’s nancial situation. The
+Dow Jones Average re ects the business sector of the economy. We will look
+at trends of these indicators over time to get a historical perspective.
+
+```{r}
+# cost of living in dollar per item an the following years.
+cost_of_living_df <-  tibble(
+  items = c("coffe", "gas", "rent"), 
+  metrics = c("kg", "gallons", "month"), 
+  quantity_basket = c(10, 50, 1),
+  prices_Y_2020 = c(4.00, 3.00, 1000.00),
+  prices_Y_2025 = c(5.00, 4.00, 1100.00),
+  )
+cost_of_living_df
+```
+
+The CPI is an important economic indicator. The CPI measures the change
+over time in the price of the items that people buy in day-to-day living. The
+basic idea of the CPI is that it looks at how much various items cost from
+month to month. If the cost of items goes up, then the CPI records the amount
+more that we must pay to purchase the same items. The CPI has the goal
+of giving a sense about how much, more or less, it costs real people in the
+United States to buy a cross-section of goods and services. To produce the
+CPI, a speci ed collection of goods and services is used, called the market
+basket. Each month, people go out and see how much it would cost to buy
+that market basket. The cost from month to month is compared.
+
+$CPI_Current Year = \dfrac{Cost of Market Basket in Base Year}{Cost of Market Basket in Current Year} * 100$
+
+```{r}
+cpi_cy = CMBCY/(CMBBY * 100)
+CPI_CY
+cpi_cy
+```
+
+```{r}
+
+cpi <-  subs(
+  cpi_cy, 
+  list(CMBCY = sum(cost_of_living_df$prices_Y_2025 * cost_of_living_df$quantity_basket), 
+       CMBBY = sum(cost_of_living_df$prices_Y_2020 * cost_of_living_df$quantity_basket)))
+cpi
+```
+
+The result of 113.45 means that prices for the basket of goods are 13.45% higher in 2024 than they were in the base year (where the CPI is always 100).
+
+```{r}
+N(cpi, digits = 5)
+```
+There are certainly many features that complicate the simple basic idea of
+the CPI. One change is that people buy different things as different products
+come on the market. It would not be sensible to compare only the items
+in the 1965 market basket with the costs of those same items today. Some
+items produced then would not be purchased today at all. Many items, such
+as computer-based goods, would not have been invented in 1965, yet form
+a signi cant part of consumer purchasing today. All these features lead
+to complicated strategies for adding and removing items from the market
+basket. If, over a certain number of years, it costs twice as much to buy the
+same collection of things, then we would be able to assert that in ation has
+doubled the prices. The CPI, then, gives us a
+sense of what a dollar is worth.
+
+### Data mining
+
+Data mining refers to the process of looking at an existing collection of data
+to nd patterns or trends. Data mining can be a very valuable strategy for
+identifying features of the world; however, there are dangers. In large sets
+of data, we expect there to be patterns that occur by random chance alone.
+We would also expect rare events to occur by chance. The appropriate use of
+data mining is to nd patterns, then undertake new experiments to con rm or
+reject the hypothesis suggested by the mined data.
+
+An analogy that makes this point very clearly is the lottery. Suppose that,
+among investment strategies, we included buying lottery tickets. We would
+find that, among the possible investments, there was one $1 investment that
+earned $100 million. Following the logic of investing in the manner that
+worked best last year, we would invest in lottery tickets—perhaps we would
+choose to select the same numbers as the winning ticket. This investment
+decision is unlikely to be a good one.
+
+**Benford’s Law.**
+
+Data mining leads us to an interesting phenomenon in economics: Benford’s
+Law. Physicist Frank Benford did a study of some 20,000 various data
+sets of numbers and discovered that approximately 30% of the numbers
+began with 1, rather than about 11%, as expected (1 out of 9). He
+formulated Benford’s Law: The proportion of numbers beginning with 1 is
+
+```{r}
+log10(1 + 1/1)
+```
+with 3 digits:
+
+```{r}
+log10(1 + 1/3)
+```
+and so forth, until with 9, when the proportion is:
+```{r}
+log10(1 + 1/9)
+
+```
+f you doubt the veracity of this
+law, pick a random list of numbers and you will likely see that the number 1
+appears disproportionately often as the lead number.
+
+
+Let’s take an example. Suppose you deposit $1.00 in a bank account that
+offers a 10%-per-year growth rate. In looking at your growing deposit
+through the years, you will nd a preponderance of leading 1s at rst,
+because when we start with a number that begins with 1, 10% more still has
+a leading 1, 10% more still does, and so forth. When you arrive at numbers
+starting with the digit 2, you start to make bigger jumps, so you have fewer
+numbers with leading 2s, and so forth until you arrive at the teens; at that
+point, you are back to leading 1s for quite some time as compared to the
+20s, 30s, and so forth. If we begin with a number that starts with, say, 9,
+then 10% often pushes it beyond starting with 9 and definitely does so on the
+next occurrence.
+
+This lecture has presented some familiar economic indicators. Much of the
+way we measure our financial situation involves statistical presentations of
+the economic conditions of our lives. We must interpret data appropriately to
+know where we stand. Because dollars change in value over time, comparing
+a dollar from one time with a dollar from another does not capture the
+meaning we seek. We must be careful to avoid the pitfalls of drawing
+inappropriate conclusions from data-mining methods.
+
+# Concept and Applications
+
+## TIME SERIES ANALYSIS
+
+Time series analysis gives us a way to model response
+data that’s correlated with itself from one point in
+time to the next—data that has a time dependence.
+To analyze that type of data, we need new methods that
+can model a dependency on time. We’ve traditionally
+looked at modeling the relationship of ( predictor ) X versus
+( response ) Y, whether by linear, polynomial, or logistic
+regression. But now, we have a single measurement
+from a population and we want to understand how
+that measurement changes over time. Time is the
+independent predictor variable. Our goal is to understand
+how our response, Y, varies with respect to time.
+
+### TIME SERIES
+
+A time series is a collection of evenly spaced numerical observations
+that are measured successively in time.
+
+The 3 main goals of time series analysis are to describe ( identify
+patterns, trends, and seasonal variation ), explain ( understand and
+model the data ), and forecast ( predict short-term trends from previous
+patterns ).
+
+
+Statisticians are especially interested in understanding the underlying
+structure so that they can forecast future values. The goal is to develop
+a statistical model that describes and explains the data in such a way
+that forecasting can occur.
+
+The data file “wages” contains monthly values of the average hourly
+wages ( in dollars ) for workers in the U.S. apparel and textile products
+industry for July 1981 through June 1987.
+```{r}
+data(wages)
+plot(wages, ylab="monthly wages", type="o")
+```
+
+Notice that this plot shows a strong increasing trend, perhaps linear or
+quadratic. If we didn’t know that this was a time series, we would fit a
+linear regression to the data, look for a significant predictor, and check
+the residuals for normality and independence using quantile-quantile
+( Q-Q ) plots.
+ۧ Time series analysis follows in much the same way: Fit a line to the
+ۧ
+data as a function of time ( predictor ) and check the residuals ( what’s
+left over from the fit ). They should look like noise ( not have any
+pattern or trend ).
+
+```{r}
+wages_lm = lm(wages ~ time(wages))
+summary(wages_lm)
+```
+With a multiple R2 of 97% and highly significant regression coefficients,
+the case might appear to be closed. But let’s make sure that our residuals
+don’t have any trend in them.
+
+```{r}
+y <-  rstandard(wages_lm)
+plot(y, x=as.vector(time(wages)),
+ylab='Standardized Residuals',type='o',
+main="Residuals Plot")
+```
+- For residuals, the desirable result is that their correlation is 0. In other
+words, residuals should be unrelated to each other.
+
+- These residuals don’t look random at all. They hang together too closely,
+suggesting that there’s still more structure to be removed from the
+data. Let’s try a quadratic fit on the wages time series.
+
+```{r}
+wages_lm2 <- lm(wages ~ time(wages) + I(time(wages)^2))
+summary(wages_lm2)
+```
+
+Again, based on the regression summary and an R2 of 0.986, it appears
+as if we might have the best model. Let’s look at the residuals.
+
+```{r}
+y <-  rstandard(wages_lm2)
+plot(y, x = as.vector(time(wages)), ylab='Standardized
+Residuals', type='o', main="Residual Plot")
+```
+There still appears to be some structure in the residuals. Let’s check
+them for normality.
+
+```{r}
+hist(rstudent(wages_lm2), xlab='Standardized Residuals')
+```
+
+```{r}
+qqnorm(rstudent(wages_lm2))
+qqline(rstudent(wages_lm2))
+```
+```{r}
+shapiro.test(rstudent(wages_lm2))
+```
+Y1, Y2, …, Yt, where Yt is the value of the variable Y at time t for t = 1, 2, ….
+ۧ ۧ What are the expected value, variance, covariance, and correlation in
+this new contest? Not much changes, except the notation. Let’s see how
+those look in the time series context.
+
+### TYPES OF MODELS
+
+The basic objective usually is to determine a model that describes
+ۧ
+the pattern of the time series. Let’s consider the 2 types of models
+for the pattern in a time series: autoregressive models and moving
+average models.
+
+Autoregressive ( AR ) models are ones that relate the present value of a
+series to past series values. That is called an AR( 𝑝 ), an autoregressive
+model of order 𝑝, where 𝑝 is basically the number of lags and the number
+of steps you’re going to look into the past.
+```{r}
+phi*cmStats$Y + phi_p * Y_t_p + e_t
+```
+
+Theoretically, the AR( 1 ) model is written as
+```{r}
+phi*Y_t_p + e_t
+
+```
+
+A 𝜙 at 0.9 is a strong dependence on the previous point whereas a 𝜙 at
+0.1 is not getting much information from the neighboring point.
+
+The assumptions of the AR( 1 ) model are that the errors are
+independently distributed with a normal distribution that has mean 0
+and constant variance and that the errors are independent of Yt.
+
+Moving average ( MA ) models are ones that relate the present value of a
+series to past prediction errors.
+
+```{r}
+e_t + Theta*e_t_1 + Theta * e_t_q
+```
+
+These past prediction errors have to be estimated by nonlinear methods
+and are known as moving average terms in the model.
+
+In the MA( q ) way of thinking, the observations of a random variable at
+time t are affected by the shock at time t( et ) and by the shocks that have
+taken place before time t.
+
+Together, these time series models are called autoregressive moving
+average ( ARMA ) models, which provide one of the basic tools in time
+series modeling.
+
+When we include differencing ( taking the difference of Yt − Yt−1 ), we get
+autoregressive integrated moving average ( ARIMA ) models. ARIMA series
+often have an underlying linear trend and sometimes contain seasonality,
+which is cyclical fluctuations that reoccur seasonally throughout a year.
+
+### SEASONAL SERIES
+
+The other common pattern in a time series dataset is seasonality, which
+is any kind of periodicity.
+
+A time series repeats itself after a regular period of time. The business
+cycle plays an important role in economics. In time series analysis, the
+business cycle is typically represented by a seasonal ( or periodic ) model.
+
+A smallest time period for this repetitive phenomenon is called a seasonal
+period, s. We use s to denote periodicity of a seasonal time series.
+
+The monthly airline passenger time series, first investigated by George
+Box and Gwilym Jenkins in 1976, is considered a classic time series.
+Let’s check out the time series plots of the original series.
+
+```{r}
+plot(airpass, type='o',ylab='Air Passengers')
+```
+
+```{r}
+plot(airpass, type='o',ylab='Air Passengers', main="Air
+Passengers")
+```
+```{r}
+plot(log(airpass), type='o',ylab='Log(Air Passengers)')
+```
+The graph of the logarithms displays a much more constant variation
+around the upward trend. Check out the change in values on the 𝑦-axis:
+100 to 600 down to 4.5 to 6.5. Notice that the log transformation has
+removed the increasing variability, or heteroscedasticity.
+
+The first difference of a time series is the series of changes from one
+period to the next. If Yt denotes the value of the time series Y at period t,
+then the first difference of Y at period t is equal to Yt − Yt−1.
+
+We use differencing methods to model and remove the effect of trends
+( linear, quadratic, etc. ) in the data. Let’s check out the time series plots
+of the first difference of the log series.
+
+```{r}
+plot(diff(log(airpass)),type='o',ylab='Difference of
+Log(Air Passengers)')
+plot(diff(log(airpass)),type='l',ylab='Difference of')
+```
+```{r}
+plot(diff(log(airpass)),type='o',ylab='Difference of
+Log(Air Passengers)')
+points(diff(log(airpass)),x=time(diff(log(airpass))),pch=
+as.vector(season(diff(log(airpass)))))
+```
+
+The seasonality can be observed by looking at the plotting symbols
+carefully. Septembers, Octobers, and Novembers are mostly at the low
+points, and Decembers are mostly at the high points.
+ۧ ۧ Let’s check out the time series plot of the seasonal difference of the first
+difference of the logged series.
+
+```{r}
+plot(diff(diff(log(airpass)),lag=12),type='l',ylab='First
+& Seasonal Differences of Log(AirPass)')
+points(diff(diff(log(airpass)),lag=12),x=time(diff(diff(log(airpass)),lag=12)),
+pch=as.vector(season(diff(diff(log(airpass)),lag=12))))
+```
+- We chose to do the plot with seasonal plotting symbols. The seasonality
+is much less obvious now. Some Decembers are high and some are low.
+Similarly, some Octobers are high and some are low.
+
+- We’ve accounted for the structure in our data through taking the log,
+the first difference, and the first seasonal difference.
+
+
+### SAMPLE AUTOCORRELATION FUNCTION
+
+How much is this time series correlated with itself? The sample
+autocorrelation function ( ACF ) can give us an answer.
+
+Here, the ACF gives correlations between the series 𝑦t and lagged values
+of the series for lags of 1, 2, 3, and so on. This is a visual plot of 𝜌1, 𝜌2, ….
+The ACF can be used to identify the possible structure of time series
+data. That can be tricky because there often isn’t a single clear-cut
+interpretation of a sample ACF.
+
+In a different way, the ACF of the residuals for a model is also useful.
+The ideal for an ACF of residuals is that there aren’t any significant
+correlations for any lag, because then your model has taken into account
+all of the structure in the data.
+
+```{r}
+acf(rstandard(wages_lm))
+```
+
+Here’s the ACF of the seasonal difference of the first difference of the
+logged series for air passengers.
+```{r}
+acf(as.vector(diff(diff(log(airpass)),lag=12)),ci.type='ma',
+main='First & Seasonal Differences of Log(AirPass)')
+```
+Although there is a slightly significant autocorrelation at lag 3, the most
+prominent autocorrelations are at lags 1 and 12.
+
+Let’s fit a seasonal ARIMA model to the logged series.
+
+```{r}
+model_arima <-  arima(log(airpass),order=c(0,1,1),
+seasonal=list(order=c(0,1,1), period=12))
+
+model_arima
+```
+
+
+### FORECASTING
+
+Now that we’ve fit the data, we’d like to be able to use our model to
+make forecasts, or predictions. Let’s produce forecasts for this series
+with a lead time of 2 years.
+```{r}
+plot(model_arima,n1=c(1969,1),n.ahead=24,pch=19,ylab='Log(Air
+Passengers)')
+```
+The forecasts follow the seasonal and upward trend of the time series
+nicely. The forecast limits provide us with a clear measure of the
+uncertainty in the forecasts. We can also plot the forecasts and limits
+in original terms.
+
+```{r}
+plot(model_arima,n1=c(1969,1),n.ahead=24,pch=19,ylab='Air
+Passengers',transform=exp)
+```
+In original terms, it is easier to see that the forecast limits spread out as
+we get further into the future.
+
+### PITFALLS
+
+- A short-term trend is not the same as a long-term trend. What looks like
+a line in the short term can be a curve over a longer time period.
+Just because you found one kind of seasonality in time series doesn’t
+mean that there’s not a second and a third kind as well.
+
+- Any time series of currency ( dollars, pounds, etc. ) has to take into
+account the fact that the value of money changes over time. So, if we
+were modeling changes in home prices over time, then we would need
+to correct our data to some common base. Usually this is done by
+starting with a base year ( often the start or end of the series, or the
+current year ) and adjusting values based on changes to some official
+inflation statistic ( e.g., the consumer price index ).
+
+- Perhaps the biggest advantage of using time series is that we can use it
+to model the past—and better understand the future.
+
