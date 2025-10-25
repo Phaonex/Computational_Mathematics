@@ -1,0 +1,292 @@
+---
+title: "Inference—How Close? How Con dent?"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Foundational Concepts
+
+In this lecture, we’re going to introduce basic concepts and principles
+of statistical inference, namely, how can we use information about just
+some members of a population to infer that information about the whole
+population?
+
+The goal of statistical inference is to answer the questions “How
+close?” and “How con dent?” How close are the shape, center, and spread
+of just some of the population to the shape, center, and spread of the
+whole population? How con dent are we of that?
+
+In order to make a useful conclusion, we have to make a reasonable guess
+about how close our random sample is to the population’s values and how
+con dent we are of being that close. Political polls are common examples
+in which statistical inference is used. Suppose the reality is that 60%
+of voters favor Candidate A and 40% favor Candidate B. Suppose we ask
+100 random future voters how they will vote in the upcoming presidential
+election. Some number of those will favor Candidate A. Or we can run 10
+simulations in which we ask 100 voters each time, with each simulation
+giving us a number for Candidate A.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+cmStats <- modules::use("CmStats.R")$cmStats
+
+A <- .60
+B <- .40
+```
+
+```{r}
+range(stats::rnorm(100))
+```
+
+```{r}
+data <- LETTERS[1:2]
+rand_sample <- mapply(\(x) sample(data, size=100, replace=TRUE), 1:10)
+rand_sample[1:10, 1:10]
+```
+
+```{r}
+votes <- table(rand_sample)
+total <- sum(votes)
+```
+
+```{r}
+c(votes['A']/total, votes['B']/total)
+```
+
+In this case, the answer to “How close?” is 10%, and the answer to “How
+con dent?” is 95%. Surprisingly, 95% of the time, a random sample of
+1200 people will give us an estimate that lies within ±3% of the actual
+truth in the whole population.
+
+We have seen two important principles:
+
+• Randomness is involved in statistical inference.
+
+• The conclusion of a statistical inference is an estimate, together
+with a pair of numbers that tells us how close to the true population
+value the estimate is and how con dent we are that the estimate is that
+close.
+
+Another kind of challenge for statistical inference is how to tell
+whether a coin is fairly balanced and equally likely to come up heads as
+tails. In practice, we put the coin “on trial.” We ip the coin 100 times
+and count how often it is heads and tails; we are getting random
+evidence about the frequency with which heads or tails arise.
+
+```{r}
+data <- c('T', 'H')
+rand_sample <- sample(data, size=100, replace=TRUE)
+rand_sample
+```
+
+```{r}
+table(rand_sample)
+```
+
+Statistical inference grues prominently in tests of medications. Suppose
+we want to establish that a medicine works. A new medication is given to
+1000 people who have a particular ailment, and a placebo is given to
+another 1000 people with the same ailment. If a much higher proportion
+of people get well taking the new medicine than taking the placebo, then
+that is strong evidence that the medication has a beneficial effect. If
+a somewhat higher proportion of people get well taking the new medicine,
+then we need to do some mathematical analysis to determine how
+persuasive the evidence is that the medication actually has a beneficial
+effect. To measure the strength of the evidence, we need to understand
+how much variation in results we should expect from the random process
+of some people getting well spontaneously.
+
+The logic of statistical inference is to compare data that we collect to
+expectations about what the data would be if the world were random in
+some particular respect. Analyses of randomness and probability allow us
+to quantify our condence in extrapolations from some of the data to the
+whole population. Randomness and probability are the cornerstones of all
+methods for testing hypotheses. \# Concept and Applications
+
+# Concept and Applications
+
+## SAMPLING AND PROBABILITY?
+
+tatistics sharpens our knowledge of how randomness is all around us.
+Life is full of having to make decisions under uncertainty. Two
+fundamental ideas in statistics are uncertainty and variation.
+Probability is the foundation that helps us understand uncertainty and
+variation. This is why probability plays a key role in statistics.
+Probability is a mathematical language used to measure uncertain events.
+Whenever we collect data or make measurements, the process that we use
+is subject to variation, meaning that if the same measurements were
+repeated, the answer would be slightly different, due to variation.
+
+```{r}
+table(rand_sample)
+```
+
+Data is the raw information from which statistics are created. Data is
+being collected everywhere all the time. When we collect data, we
+convert information to numbers. Statistical thinking gives you the tools
+to intelligently extract information from data.
+
+```{r}
+rand_sample
+```
+
+Because there is always uncertainty, a strong foundation in
+probabilistic reasoning gives you the basic tools needed to make sense
+of everything that is done in statistics. Sampling refers to selecting,
+at random, one or more of all possible outcomes ( ideally, in proportion
+to their likelihoods ). An example of sampling is selecting a random
+sample of Americans for a political poll.
+
+Sampling helps us draw inferences about the larger population of
+outcomes. Drawing random samples forms the foundation of probability.
+Probability is all about considering the possible outcomes of an
+experiment and quantifying their chances.
+
+What happens when we have real, but limited, data, for which we’d ۧ like
+to calculate probabilities? Suppose that you want to understand how a
+grocery store displays cereal boxes and whether different types of
+breakfast cereals are targeted to adults or children. You go into our
+local grocery store and notice that there are 6 rows of shelves and that
+each shelf has 5 boxes of cereal. You can group the 6 shelves into 3
+categories: the bottom 2 shelves, the middle 2 shelves, and the top 2
+shelves.
+
+```{r}
+cereal_df <- data.frame(row_name = c("adults", "children", "total"), top = c(9, 1, 10), middle= c(3, 7, 10), bottom = c(0, 10, 10), total = c(12, 18, 30))
+cereal_df
+```
+
+What is the probability of A?
+
+```{r}
+P = function(E, p = cereal_df[3, "total"]) cmStats$P(E,p)
+A <- cereal_df[1, "total"]
+p = cereal_df[3, "total"];
+```
+
+```{r}
+P(A)
+```
+
+We could do the same type of calculation to determine the probability of
+breakfast cereal being on the middle 2 rows: B = {breakfast cereal is on
+the middle 2 rows}.
+
+```{r}
+B <- cereal_df[3, "bottom"]
+P(B)
+```
+
+It’s natural to think about how 2 events relate to each other. For
+example, what’s the probability that the cereal is targeted at adults
+and is located on the middle 2 shelves? In this case, we want to look at
+our data to see where those 2 events occur together. Notice that 3 ( not
+2 ) types of breakfast cereal are located in the middle 2 shelves and
+targeted at adults. So, the probability would be
+
+```{r}
+P(intersect(A, B)) ~ 3/30 ~ abs(diff(union(A, B)) - 1)/p
+```
+
+```{r}
+
+P(union(A, B)) ~ P(A) + P(B) - abs(diff(union(A, B)) - 1)/p
+
+```
+
+We call the probability of A and B the intersection, the place where the
+
+2 events overlap.
+
+```{r}
+ sum(P(union(A, B))) - abs(diff(union(A, B)) - 1)/p
+```
+
+We can update our probabilities of events by conditioning on new given
+information. Let’s define a new event. Let C be the event that cereal is
+targeted to children: C = {children breakfast cereal}. What’s the
+probability of C?
+
+```{r}
+P(intersectiion(C, B)) ~ 7 / 30
+```
+
+```{r}
+P(cereal_df[2, "middle"])
+```
+
+What is the probability that the cereal is targeted to children, given
+that it’s located on the middle 2 shelves? In other words, what is the
+probability of event C, given the information from event B?
+
+```{r}
+P(cereal_df[2, "middle"], B)
+
+```
+
+We’ve limited ourselves to the middle 2 shelves, and of those 10 boxes
+of cereal, we see that 8 of them are targeted to children. So, the
+conditional probability was higher.
+
+### SAMPLE SPACES, EVENTS, AND PROBABILITIES
+
+The building blocks of statistics are the axioms of probability. These
+beginning statements are the ground rules from which we build and prove
+statistical theory.
+
+Probability theory can be reduced to 3 fundamental axioms.
+
+-   1 For any event A, 0 ≤ P( A ) ≤ 1. In other words, the probability
+    of any
+
+    event is between 0 and 1. The smallest that a probability can ever
+    be is 0; the largest it can ever be is 1.
+
+-   2 If S is the sample space, P( S ) = 1 and P( ∅ ) = 0. In other
+    words, the probability of the entire sample space is 1 and the
+    probability of the empty set is 0. The sample space is everything
+    possible for the probability experiment. There are no events outside
+    of the sample space.
+
+-   3 The third axiom of probability deals with mutually exclusive
+    events, but first we need to understand unions and intersections. A
+    union is the probability of A or B and is denoted P( A ∪ B ). An
+    intersection is the probability of A and B is denoted P( A ∩ B ). If
+    A and B are mutually exclusive, meaning that they don’t overlap,
+    then the probability of their union is the sum of those
+    probabilities: P( A ∪ B ) = P( A ) + P( B ).
+
+Formally, let A and B be events, with P( B ) \> 0. The
+conditionalprobability of A given that B has occurred is
+
+```{r}
+P(A|B) ~ P(intersect(A, B))/ P(B)
+```
+
+If we set these 2 equations equal to each other, we get
+
+```{r}
+P(A|B)*P(B) ~ P(B|A)*P(A)
+```
+
+At first, this might not seem very useful. In fact, it seems rather
+circular that we’ve just rewritten P( A and B ) and P( B and A ) and set
+them equal. But if you divide both sides by P( B ), you’re left with a
+famous and useful result that relates conditional probabilities known as
+Bayes’s rule.
+
+```{r}
+P(A|B) ~ P(B|A)*P(A)/P(B)
+```
+
+Therefore, another form of Bayes’s rule is
+
+```{r}
+P(A|B) ~ P(B|A)*P(A)/P(B) ~ P(B|A)*P(A)/P(B|A)*P(A) + P(B|A^c)*P(A^c)
+```

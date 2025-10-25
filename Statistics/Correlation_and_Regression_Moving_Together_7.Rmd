@@ -1,0 +1,393 @@
+---
+title: "Correlation and Regression—Moving Together"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Foundational Concepts
+
+In everyday life, social situations, you have lots of examples of cause
+and effect. If a student studies more, that student may possibly do
+better on the next test. The income of a person is related to the amount
+of education that they have. But you could certainly ask the question of
+whether the increase in the income is a result of the knowledge or
+skills they gained from education.
+
+```{r}
+if (!caracas::has_sympy()) {
+  caracas::install_sympy() 
+}
+library(caracas)
+library(sets)
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(RColorBrewer)
+
+
+```
+
+```{r}
+  def_sym("X", "Y")
+
+cmStats <- modules::use("CmStats.R")$cmStats
+```
+
+```{r}
+
+cmStats$μ(1:10)
+Xs = c(0, 5, 20, 3, 15, 8)
+Ys = c(2, 10, 10, 6, 25, 4)
+
+sort(Xs)[(6 + 1) / 2]
+median(sort(Xs))
+
+
+cmStats$P(1, 6)
+```
+
+Statistical graphs are useful in helping us visualize data. Through
+graphs, we understand data properties, such as the mean, median, and
+standard deviation; find patterns in data, such as clustering and
+correlation; suggest an underlying model that could have generated the
+data; verify our assumptions; check and fortify our analysis; summarize;
+and communicate results. This lecture will define and identify basic
+summaries of data, both numerical and graphical, and use R for
+calculating descriptive statistics, making graphs, and even writing
+functions that work on multiple datasets.
+
+```{r}
+ ggplot(satgpa, aes(x = sat_sum, fy_gpa)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    x = "Verbal SAT percentile",
+    y = "First year (college) grade point average"
+  )
+```
+
+Describing relationships and cause and effect among variables is a basic
+strategy for understanding the world. A statistical challenge is to
+describe and measure how two variables, such as incoming SAT scores and
+college GPAs, are related. Higher SAT scores correspond with better GPAs
+in college; however, the SAT scores do not cause higher grades. In this
+lecture, we will introduce the ideas of scatter plots, which give a
+visual sense of the relationships between two variables; correlation,
+which gives a quantitative measure of the strength of the linear
+relationship between two varying quantities; and linear regression,
+which produces a straight-line approximation for a set of paired
+variables.
+
+```{r}
+cor(satgpa$sat_sum, satgpa$fy_gpa)
+```
+
+We can quantify the extent to which two variables are related by giving
+a number defining the correlation that summarizes the relationship. If
+one quantity increases and the other quantity tends to increase, the
+correlation is called positive, and the opposite is negative. Unlike the
+scatter plot of SAT scores and GPAs, which demonstrates a positive
+correlation, the scatter plot of two negatively correlated quantities
+goes down as it goes to the right.
+
+```{r}
+cor(satgpa$sat_v, satgpa$sat_m)
+```
+
+```{r}
+ ggplot(satgpa, aes(x = sat_sum, hs_gpa)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    x = "Verbal SAT percentile",
+    y = "First year (college) grade point average"
+  )
+```
+
+```{r}
+cor(satgpa$hs_gpa, satgpa$fy_gpa)
+```
+
+The correlation is denoted r (or [the Greek letter rho] ). It is
+computed as follows: For each member of the population (e.g., student),
+take the distance of the rst variable (SAT score) from the rst
+variable’s mean in units of standard deviation (that is, take the
+z-score of the SAT score) multiplied by the distance of the second
+variable (GPA) from its mean, again measured in units of standard
+deviation (that is, multiply by the z-score of the GPA).
+
+```{r}
+cmStats$rho_sym(X, Y)
+```
+
+We often summarize a scatter plot by a straight line. If the data set
+has a high correlation, the straight line will lie near most of the
+points. The straight line is a kind of summary of the data. The line is
+called a linear regression line. It is a line that approximates the
+data.
+
+```{r}
+c(sd(satgpa$sat_sum), mean(satgpa$sat_sum))
+
+```
+
+```{r}
+c(sd(satgpa$fy_gpa), mean(satgpa$fy_gpa))
+```
+
+Similar mechanisms are used when there are more than two variables.
+Several explanatory variables can often make better predictions than any
+single variable alone. When two or more variables are used to predict
+another variable, we use multiple regression to summarize the situation.
+
+```{r}
+cor(satgpa)
+```
+
+Statistical correlation indicates an association but does not prove that
+there is a causal relationship between the variables. **One of the
+misuses of statistical information is to mistakenly infer cause and
+effect from correlation.**
+
+# Concept and Applications
+
+## VALIDATING STATISTICAL ASSUMPTIONS
+
+Statistical graphs are useful in helping us visualize data. Through
+graphs, we understand data properties, such as the mean, median, and
+standard deviation; find patterns in data, such as clustering and
+correlation; suggest an underlying model that could have generated the
+data; verify our assumptions; check and fortify our analysis; summarize;
+and communicate results. This lecture will define and identify basic
+summaries of data, both numerical and graphical, and use R for
+calculating descriptive statistics, making graphs, and even writing
+functions that work on multiple datasets.
+
+### BAR PLOTS
+
+```{r}
+attach(iris)
+```
+
+The “iris” dataset is widely used throughout statistical science for
+illustrating various problems in statistical graphics, multivariate
+statistics, and machine learning. It’s a small but nontrivial dataset.
+The data values are real ( as opposed to simulated ) and are of high
+quality ( collected with minimal error ). The data were used by the
+celebrated British statistician Ronald Fisher in 1936.
+
+```{r}
+ggplot( iris, aes(x = Species, y = Petal.Length)) +
+  geom_col()
+
+
+ggplot( iris, aes(x = Species, y = Sepal.Length)) +
+  geom_col()
+
+ggplot(iris, aes(x = Sepal.Length, colour =Species)) +
+  geom_his() +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+```
+
+### BOX PLOTS
+
+The summary function is a quick and easy way to assess the statistical
+properties of each attribute. These values are displayed graphically in
+a box plot.
+
+```{r}
+summary(iris[,1: 2])
+```
+
+```{r}
+summary(iris[,3: 4])
+
+```
+
+Box plots are used to compactly show many pieces of information about a
+variable’s distribution. They are great for visualizing the spread of
+the data. Box plots show 5 statistically important numbers: the minimum,
+the 25th percentile, the median, the 75th percentile, and the maximum.
+
+```{r}
+iris_long <- iris |> tidyr::pivot_longer(cols = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width), names_to= "Measurement", values_to= "Value")
+
+ggplot(iris_long, aes(x = Measurement, y = Value)) +
+  geom_boxplot()
+
+ggplot(iris_long, aes(x = Measurement, y = Value, fill = Species)) +
+  geom_boxplot()
+```
+
+### SCATTERPLOTS
+
+Scatterplots are helpful for visualizing data and simple data
+inspection. Let’s try the following code
+
+Let’s generate corresponding scatterplots for Petal.Width, Sepal.
+Length, and Sepal.Width.
+
+```{r}
+
+ggplot(iris, aes(x = Species, y = Petal.Length)) +
+  geom_point(alpha = 0.6, position = position_jitter(width = 0.2))
+
+ggplot(iris_long, aes(x = Measurement, y = Value, fill = Species)) +
+  geom_point(alpha = 0.6, position = position_jitter(width = 0.2))
+```
+
+It continues in this fashion for Petal.Length and Petal.Width. Bring
+your attention to the bottom-left corner, the last plot in column 1.
+This plot has Sepal.Length on the 𝑥-axis and Petal.Width on the 𝑦-axis.
+
+```{r}
+
+# 1. Calculate the correlation matrix
+cor_matrix <- cor(iris[, 1:4])
+
+# 2. Reshape the data for ggplot2
+# First, convert the matrix to a data frame and add row names as a column
+cor_df <- as.data.frame(cor_matrix)
+cor_df <- tibble::rownames_to_column(cor_df, var = "Var1")
+
+# Then, use pivot_longer() to reshape it
+cor_long <- tidyr::pivot_longer(
+  cor_df,
+  cols = -Var1,
+  names_to = "Var2",
+  values_to = "Correlation"
+)
+
+# 3. Create the heatmap plot
+ggplot(cor_long, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(
+    low = "red", high = "green", mid = "white",
+    midpoint = 0, limit = c(-1, 1),
+    name = "Pearson\nCorrelation"
+  ) +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 4) +
+  labs(
+    title = "Correlation Matrix of Iris Measurements",
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+names(iris[, 1:4])
+```
+
+### HISTOGRAMS
+
+A histogram is a plot that breaks the data into bins ( or breaks ) and
+shows the frequency distribution of those bins.
+
+Let’s create some histograms of our iris data. The number of bins in the
+histogram is variable.
+
+```{r}
+ggplot(iris, aes(x = Petal.Width)) +
+  geom_histogram(bins = 13) +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+
+ggplot(iris, aes(x = Petal.Length)) +
+  geom_histogram(bins = 25) +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+
+```
+
+### DENSITY PLOTS
+
+Density plots can be viewed as smoothed versions of a histogram. We can
+estimate the density using R’s density function.
+
+```{r}
+ggplot(iris, aes(x = Petal.Width)) +
+  geom_density() +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+
+ggplot(iris, aes(x = Petal.Length)) +
+  geom_density() +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+
+ggplot(iris, aes(x = Sepal.Width)) +
+  geom_density() +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+
+ggplot(iris, aes(x = Sepal.Length)) +
+  geom_density() +
+  labs(
+    x = "Sepal lenght",
+    y = "Frequecy"
+  )
+```
+
+Let’s also look at the density function of Petal.Length for each of the
+3 classes of irises.
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, fill = Species)) +
+  geom_density()
+```
+
+### CONTOUR PLOTS
+
+Density estimation is available for higher-dimensional data using
+contour plots. A contour plot is a graph that explores the potential
+relationship among 3 variables.
+
+Contour plots display the 3-dimensional relationship in 2 dimensions,
+with 𝑥 and 𝑦 variables plotted on the 𝑥 and 𝑦 scales and the z variable
+represented by contours.
+
+```{r}
+
+# Create the contour plot using geom_density_2d()
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_density_2d(aes(color = Species)) +
+  labs(
+    title = "Contour Plot of Iris Data Density",
+    subtitle = "Traces show the density of points for each species",
+    x = "Sepal Length (cm)",
+    y = "Sepal Width (cm)"
+  )
+
+```
+
+The plot may also be viewed as a heat map, with brighter colors denoting
+more values in those regions.
+
+```{r}
+# Create separate grid heatmaps for each species
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_density_2d_filled(aes(fill = after_stat(level))) +
+  labs(
+    title = "Grid Heatmap by Species",
+    x = "Sepal Length (cm)",
+    y = "Sepal Width (cm)"
+  )
+```

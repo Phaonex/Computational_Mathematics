@@ -1,9 +1,13 @@
 {
     "sortOrder": [
         {
+            "columnIndex": 4,
+            "ascending": false
+        },
+        {
             "columnIndex": 2,
             "ascending": true
         }
     ],
-    "path": "~/Documents/computation mathematics/git_repo/Computational_Mathematics/Statistics/data_sets"
+    "path": "~/Documents/computation mathematics/git_repo/Computational_Mathematics/Statistics"
 }
